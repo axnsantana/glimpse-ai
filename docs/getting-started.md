@@ -4,9 +4,13 @@ Glimpse adds an assistant in a side panel to a NiceGUI app. It answers questions
 
 ## Install
 
+Glimpse is not on PyPI yet, so install it from a clone of the repository:
+
 ```bash
-pip install "glimpse-ai[anthropic]"    # or glimpse-ai[openai] for OpenAI and local models
+pip install -e ".[anthropic]"    # or .[openai] for OpenAI and local models
 ```
+
+Once it is released, this will be `pip install "glimpse-ai[anthropic]"`.
 
 You import it as `glimpse`. Python 3.10 or later and NiceGUI 3.19 or later are required.
 

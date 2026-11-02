@@ -49,4 +49,4 @@ gh api '/repos/zauberzeug/nicegui/security-advisories?per_page=100' --jq '.[] | 
 
 ## Reporting a vulnerability
 
-Report privately through [GitHub security advisories](https://github.com/axnsantana/glimpse/security/advisories/new), not in a public issue.
+Report privately through [GitHub security advisories](https://github.com/axnsantana/glimpse-ai/security/advisories/new), not in a public issue.

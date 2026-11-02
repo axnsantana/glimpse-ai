@@ -40,7 +40,7 @@ dev = [
 ]
 
 [project.urls]
-Repository = "https://github.com/axnsantana/glimpse"
+Repository = "https://github.com/axnsantana/glimpse-ai"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/glimpse"]

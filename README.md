@@ -26,7 +26,7 @@ Users get a side panel where they can ask about what is on their screen. The ass
 No API key is needed. Without one, the panel runs in a clearly labelled offline demo mode that answers from simple rules over the page.
 
 ```bash
-git clone https://github.com/axnsantana/glimpse && cd glimpse
+git clone https://github.com/axnsantana/glimpse-ai && cd glimpse-ai
 conda env create -f environment.yml && conda activate glimpse
 python examples/02_sales_dashboard.py
 ```
