@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Glimpse for NiceGUI</title>
+<meta name="description" content="Add an AI assistant that can see the page to your NiceGUI app, in one line. It reads filters, sort order, tabs and chart zoom when the user asks.">
+<meta property="og:title" content="Glimpse for NiceGUI">
+<meta property="og:description" content="Your user filtered the table. Does your assistant know? Add an assistant that reads the view the user actually has, in one line.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://axnsantana.github.io/glimpse-ai/">
+<meta property="og:image" content="https://axnsantana.github.io/glimpse-ai/images/dashboard-filtered.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232c49c7'/%3E%3Cpath d='M5 16s4-7 11-7 11 7 11 7-4 7-11 7S5 16 5 16Z' fill='none' stroke='%23fff' stroke-width='2.4'/%3E%3Ccircle cx='16' cy='16' r='3.4' fill='%23ffe27a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: the page borrows the product's own shape. Each section is the page on the left and,
+   in a rail on the right, the real text the assistant received for it. */
+:root {
+  --ground: #eef1f6; --paper: #ffffff; --ink: #141b2b; --soft: #515c76; --line: #d3d9e5;
+  --accent: #2c49c7; --accent-ink: #ffffff; --chip: #e4e9fb; --mark: #ffe27a; --mark-ink: #33290a;
+  --code: #182033; --code-ink: #e6ebf7; --code-soft: #9eabc6; --code-key: #ffe27a;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "Instrument Sans", "Helvetica Neue", "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --shadow: 0 1px 2px rgba(20, 27, 43, .08), 0 14px 36px rgba(20, 27, 43, .11);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #10141f; --paper: #181e2c; --ink: #e8ecf5; --soft: #a0abc2; --line: #2d3549;
+    --accent: #9db0ff; --accent-ink: #10141f; --chip: #252e49; --mark: #ffe27a; --mark-ink: #33290a;
+    --code: #0b0f18; --code-ink: #e6ebf7; --code-soft: #8f9cb8; --code-key: #ffe27a;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 14px 36px rgba(0, 0, 0, .4); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #10141f; --paper: #181e2c; --ink: #e8ecf5; --soft: #a0abc2; --line: #2d3549;
+  --accent: #9db0ff; --accent-ink: #10141f; --chip: #252e49; --mark: #ffe27a; --mark-ink: #33290a;
+  --code: #0b0f18; --code-ink: #e6ebf7; --code-soft: #8f9cb8; --code-key: #ffe27a;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 14px 36px rgba(0, 0, 0, .4); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--ground); color: var(--ink); font: 400 17px/1.6 var(--body); -webkit-font-smoothing: antialiased; }
+img { display: block; max-width: 100%; height: auto; }
+a { color: var(--accent); text-underline-offset: .18em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, pre { font-family: var(--mono); }
+p { margin: 0; }
+.wrap { max-width: 1200px; margin-inline: auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+
+.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; padding-block: 20px; }
+.brand { display: flex; align-items: baseline; gap: 10px; font: 700 22px/1 var(--display); }
+.pill { font: 500 12px/1 var(--mono); padding: 4px 7px; border: 1px solid var(--line); border-radius: 5px; color: var(--soft); }
+.top nav { display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 15px; font-weight: 500; }
+.top nav a { color: var(--ink); text-decoration: none; }
+.top nav a:hover { color: var(--accent); }
+
+.hero { padding-block: 40px 36px; display: grid; gap: 28px; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: end; }
+h1, h2 { font-family: var(--display); font-weight: 700; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2.5rem, 6.4vw, 4.6rem); line-height: 1.02; letter-spacing: -.025em; }
+h1 mark { background: var(--mark); color: var(--mark-ink); padding: 0 .12em; border-radius: 4px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.lede { font-size: 1.15rem; max-width: 34em; }
+.lede + .actions { margin-top: 20px; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.button { display: inline-block; padding: 10px 16px; border-radius: 7px; font-weight: 600; font-size: 15px; text-decoration: none; border: 1px solid var(--line); color: var(--ink); background: var(--paper); }
+.button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.button:hover { filter: brightness(1.06); }
+
+.demo { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+.demo-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.demo-q { font-weight: 600; min-width: 0; }
+.switch { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 3px; background: var(--ground); border-radius: 8px; }
+.switch button { font: 500 14px/1.2 var(--body); color: var(--soft); background: none; border: 0; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+.switch button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.demo-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); }
+.demo-shot { border-right: 1px solid var(--line); min-width: 0; background: var(--ground); }
+.answer { padding: 18px 20px; min-width: 0; display: flex; flex-direction: column; gap: 12px; font-size: 16px; }
+.answer mark { background: var(--mark); color: var(--mark-ink); padding: 0 .2em; border-radius: 3px; font-weight: 600; }
+.ref { font: 500 12px/1 var(--body); padding: 2px 6px; border-radius: 4px; background: var(--chip); color: var(--accent); white-space: nowrap; }
+.label { font: 500 12px/1.3 var(--mono); letter-spacing: .04em; color: var(--soft); }
+.agree { font-size: 14px; color: var(--soft); border-top: 1px solid var(--line); padding-top: 12px; }
+.note { padding-block: 12px 0; font-size: 14px; color: var(--soft); max-width: 62em; }
+
+section { padding-block: 56px 0; }
+section.row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: 28px 44px; align-items: start; }
+.prose { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.prose > p, .prose > ul { max-width: 36em; }
+h2 { font-size: clamp(1.7rem, 3.4vw, 2.5rem); line-height: 1.1; letter-spacing: -.015em; }
+ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 6px; }
+
+.rail { min-width: 0; background: var(--code); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; font-size: 12.5px; line-height: 1.55; overflow-x: auto; }
+.rail figcaption, .rail .caption { display: block; color: var(--code-soft); font: 500 12px/1.3 var(--mono); padding-bottom: 8px; }
+.rail pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: inherit; }
+.rail b { color: var(--code-key); font-weight: 500; }
+figure { margin: 0; }
+.shot { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; box-shadow: var(--shadow); background: var(--paper); }
+
+.code { background: var(--code); color: var(--code-ink); border-radius: 10px; padding: 16px 18px; font-size: 13px; line-height: 1.6; overflow-x: auto; margin: 0; min-width: 0; }
+.code .k { color: var(--code-soft); }
+.code .hl { color: var(--code-key); }
+.install { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--code); color: var(--code-ink); border-radius: 8px; padding: 8px 8px 8px 16px; font: 400 14.5px/1.4 var(--mono); }
+.install code { overflow-x: auto; white-space: nowrap; min-width: 0; }
+.install button { flex: none; font: 500 13px/1 var(--body); padding: 8px 10px; border-radius: 6px; border: 0; cursor: pointer; background: var(--code-ink); color: var(--code); }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; vertical-align: top; padding: 11px 14px; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+th { font: 500 12px/1.3 var(--mono); letter-spacing: .04em; color: var(--soft); }
+td code { font-size: 12.5px; overflow-wrap: anywhere; }
+td.when { font-weight: 500; min-width: 10em; }
+
+.examples { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 32px; }
+.examples li { padding: 10px 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: 2.4em minmax(0, 1fr); }
+.examples .n { font: 500 13px/1.7 var(--mono); color: var(--soft); }
+.examples a { font-weight: 600; }
+.examples span.d { display: block; font-size: 15px; color: var(--soft); }
+
+.state { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 44px; }
+.state h3 { margin: 0 0 8px; font: 700 1.1rem/1.2 var(--display); }
+footer { margin-top: 64px; border-top: 1px solid var(--line); padding-block: 24px 36px; font-size: 14.5px; color: var(--soft); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; }
+
+@media (max-width: 960px) {
+  .hero, section.row, .demo-body, .state { grid-template-columns: minmax(0, 1fr); }
+  .demo-shot { border-right: 0; border-bottom: 1px solid var(--line); }
+  .examples { grid-template-columns: minmax(0, 1fr); }
+  .hero { padding-block: 20px 28px; }
+  section { padding-block: 44px 0; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="brand">Glimpse <span class="pill">alpha</span></div>
+  <nav aria-label="Main">
+    <a href="#reads">What it reads</a>
+    <a href="#examples">Examples</a>
+    <a href="#status">Status</a>
+    <a href="https://github.com/axnsantana/glimpse-ai">GitHub</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <h1>Your user filtered the table. Does <mark>your assistant</mark> know?</h1>
+  <div>
+    <p class="lede">Glimpse adds an AI assistant to your <a href="https://nicegui.io">NiceGUI</a> app in one line. It reads the page when the user asks, including their filters, sort order, tabs and chart zoom. You annotate nothing.</p>
+    <div class="actions">
+      <a class="button primary" href="#start">Get started</a>
+      <a class="button" href="https://github.com/axnsantana/glimpse-ai">View on GitHub</a>
+    </div>
+  </div>
+</div>
+
+<figure class="demo" id="demo">
+  <div class="demo-bar">
+    <div class="demo-q">“What is the highest order amount in the grid, and which order is it?”</div>
+    <div class="switch" role="group" aria-label="Choose the grid's state">
+      <button type="button" data-view="all" aria-pressed="false">All 240 orders</button>
+      <button type="button" data-view="filtered" aria-pressed="true">Filtered in the browser</button>
+    </div>
+  </div>
+  <div class="demo-body" data-panel="filtered">
+    <div class="demo-shot"><img src="images/dashboard-filtered.png" width="2160" height="1350" alt="A sales dashboard with its Orders grid filtered to APAC, sorted by amount, with SO-1185 first. The assistant panel beside it answers from those rows."></div>
+    <div class="answer">
+      <div class="label">The assistant answers</div>
+      <p>The highest amount in the grid is <mark>883 k EUR</mark>, from order <mark>SO-1185</mark>. It’s a Jun order from APAC for the Delta product, placed by Hooli, with status open <span class="ref">Orders</span>.</p>
+      <p>This only covers the current filters, Region = APAC and Status = open. That leaves 21 of the 240 orders, sorted by Amount from high to low <span class="ref">Orders</span>.</p>
+      <p class="agree">The grid in the browser agrees: 21 rows, with SO-1185 on top at 883.</p>
+    </div>
+  </div>
+  <div class="demo-body" data-panel="all" hidden>
+    <div class="demo-shot"><img src="images/dashboard-all-orders.png" width="2160" height="1350" loading="lazy" alt="The same dashboard with no filter on the Orders grid. The assistant panel beside it answers from all 240 orders."></div>
+    <div class="answer">
+      <div class="label">The assistant answers</div>
+      <p>The highest order amount is <mark>898 k EUR</mark>, from order <mark>SO-1047</mark> <span class="ref">Orders</span>. No other order has this amount.</p>
+      <p>All 240 orders were checked, not just the 50 rows shown first <span class="ref">Orders</span>.</p>
+      <p class="agree">Now switch to the filtered grid. The question stays the same, and SO-1047 drops out because it has shipped.</p>
+    </div>
+  </div>
+</figure>
+<p class="note">Real screenshots and real answers from Claude Opus 5.5, on <a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/02_sales_dashboard.py">example 02</a>. The filter exists only in the browser, so the Python code never sees it. A chat function you wired up by hand would still answer 898.</p>
+
+<section class="row" id="start">
+  <div class="prose">
+    <h2>One line, and nothing to annotate</h2>
+    <p>Add <code>glimpse.attach()</code> to a page, or call it once at module level to cover the whole app, including <code>ui.sub_pages</code>. Users get a side panel that makes room for itself next to your layout.</p>
+    <p>No key yet? The panel runs in a labelled offline demo that answers from simple rules, so you can see what it reads before you connect a model.</p>
+    <div class="install"><code id="install">pip install "glimpse-ai[anthropic]"</code><button type="button" id="copy">Copy</button></div>
+    <p style="font-size:15px;color:var(--soft)">Needs Python 3.10 or later and NiceGUI 3.19 or later.</p>
+  </div>
+<pre class="code"><span class="k">from</span> nicegui <span class="k">import</span> ui
+<span class="k">import</span> glimpse
+
+@ui.page('/')
+<span class="k">def</span> dashboard():
+    ui.echart({...})
+    ui.aggrid({...})
+    <span class="hl">glimpse.attach()</span>
+
+ui.run()</pre>
+</section>
+
+<section id="reads" class="prose">
+  <h2>It reads the view, not just the data</h2>
+  <p>Each question gets a fresh snapshot of that user’s page. This is the actual text the model receives after each thing a user might do.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th scope="col">The user</th><th scope="col">The assistant is told</th></tr></thead>
+      <tbody>
+        <tr><td class="when">Filters and sorts a grid</td><td><code>Applied state: filter: {"region": {…"filter": "APAC"}, "status": {…"filter": "open"}}; sorted_by: ["Amount desc"]</code></td></tr>
+        <tr><td class="when">Zooms a chart</td><td><code>Applied state: zoom: "25% to 50% of the axis"</code></td></tr>
+        <tr><td class="when">Hides a series</td><td><code>Hidden by the user: Cost</code></td></tr>
+        <tr><td class="when">Picks a value</td><td><code>[input-6] input "Region" = EMEA</code></td></tr>
+        <tr><td class="when">Switches tabs</td><td><code>[section-14] section "Tab: Overview" (not visible: inactive tab)</code></td></tr>
+        <tr><td class="when">Types a password</td><td><code>[input-7] input "Password" = [withheld]</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>It reads <code>ui.echart</code>, <code>ui.plotly</code>, <code>ui.aggrid</code>, <code>ui.table</code>, inputs, tabs, text and more. A widget it can’t read is listed as having no readable data, so the assistant can say so instead of guessing.</p>
+</section>
+
+<section class="row">
+  <div class="prose">
+    <h2>200,000 points in a 6,000-token budget</h2>
+    <p>Sending raw data would cost a fortune and then fail. Glimpse sends statistics computed in Python and a visible truncation notice, and gives the model read-only tools to fetch more.</p>
+    <p>On <a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/03_large_data.py">example 03</a>, we asked for critical events on the north sensor. The model made two tool calls with combined filters and answered <strong>969 events, highest reading 84.06</strong>. Both match a separate calculation over the 20,000 rows.</p>
+    <p>That request used about 3,710 of its 6,000 budget tokens. Budgets also cover history, so long sessions don’t grow until they fail.</p>
+  </div>
+<figure class="rail">
+<figcaption>What the model received</figcaption>
+<pre>[chart-5] chart "Pressure signal (200,000 points)"
+  Series "Pressure" (line): <b>showing a summary of 200,000 points</b>. Call get_series("chart-5") for raw values.
+    min 40.522 at 19535, max 99.72 at 182977, mean 70.0039, first 50.095 at 0, last 86.86 at 199999, trend rising, change +73.4%
+
+[table-6] table
+  <b>Showing 50 of 20,000 rows</b>. Call get_rows("table-6") or aggregate_rows("table-6") for the rest.</pre>
+</figure>
+</section>
+
+<section class="row">
+  <div class="prose">
+    <h2>Read-only doesn’t mean safe</h2>
+    <p>Assistants have leaked data through a rendered image or link, with no write tools involved. So Glimpse treats model output as hostile. This screenshot shows an engine acting like a compromised model. The browser made no request to the attacker.</p>
+    <ul>
+      <li>Images in answers are never rendered, and external links aren’t clickable unless you allow the host.</li>
+      <li>Answers are sanitized on the server for every streamed chunk, and the panel never parses them as HTML.</li>
+      <li>Passwords and fields like API keys are withheld by default. Exclude more columns or elements, or add a redaction hook.</li>
+      <li>Hidden text isn’t read, and page content is fenced as data, outside the system prompt.</li>
+      <li>Each user’s snapshot and conversation stay on their own connection.</li>
+    </ul>
+    <p>This limits prompt injection and doesn’t solve it. A hijacked model can still give a misleading answer, but it can’t make the browser send your data anywhere. <a href="https://github.com/axnsantana/glimpse-ai/blob/main/docs/security.md">Read the security notes</a>.</p>
+  </div>
+  <figure class="shot"><img src="images/red-team.png" width="2160" height="1350" loading="lazy" alt="An employee record page. In the panel, a malicious image is replaced by the note 'image removed', a link is disabled, and raw HTML shows as plain text."></figure>
+</section>
+
+<section class="row">
+  <div class="prose">
+    <h2>It shows its work</h2>
+    <p>Under every answer, “What the assistant saw” opens exactly what was sent and how much of the budget it used. Developers of similar tools report context that silently never arrives, and this is how you catch it.</p>
+    <p>Sources sit under each answer. Click one and the page scrolls to that chart or table.</p>
+    <p>The panel sits in a Shadow DOM, so it survives hostile CSS and leaves your styles alone. The right drawer below belongs to the host app, in a page that forces its own font on everything.</p>
+  </div>
+  <div class="prose">
+    <figure class="shot"><img src="images/inspector.png" width="2160" height="1350" loading="lazy" alt="The assistant panel with 'What the assistant saw' open, showing the token budget and the page state that was sent."></figure>
+    <figure class="shot"><img src="images/existing-layout.png" width="2160" height="1350" loading="lazy" alt="A host app with its own header, drawers and Comic Sans styling. The panel sits beside the right drawer in its own clean styles."></figure>
+  </div>
+</section>
+
+<section class="row">
+  <div class="prose">
+    <h2>Your model, or your own agent</h2>
+    <p>Claude, OpenAI and any OpenAI-compatible server work with no agent framework, and all calls run on your server. NiceGUI is the only required dependency, and provider SDKs are optional.</p>
+    <p>To use your own agent, write an async generator. Capture, budgets and sanitizing still apply, and you can use the same read-only tools.</p>
+  </div>
+<pre class="code"><span class="k"># Pick a model</span>
+glimpse.attach(model='anthropic:claude-opus-5-5')
+glimpse.attach(model='openai:gpt-5')
+glimpse.attach(model='ollama:llama3.2')
+
+<span class="k"># Or bring your own agent</span>
+<span class="k">async def</span> my_engine(messages, page):
+    yield await my_agent.run(page.to_prompt())
+
+glimpse.attach(engine=my_engine)</pre>
+</section>
+
+<section id="examples" class="prose">
+  <h2>Ten small apps to try</h2>
+  <p>The examples are how Glimpse is specified: the test suite runs each one exactly as it ships.</p>
+  <ol class="examples">
+    <li><span class="n">01</span><div><a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/01_quickstart.py">Quickstart</a><span class="d">One line, and answers that follow the screen</span></div></li>
+    <li><span class="n">02</span><div><a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/02_sales_dashboard.py">Sales dashboard</a><span class="d">Charts, grid, table, inputs and tabs, with no annotations</span></div></li>
+    <li><span class="n">03</span><div><a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/03_large_data.py">Large data</a><span class="d">200,000 points inside a tight token budget</span></div></li>
+    <li><span class="n">04</span><div><a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/04_multi_page.py">Multi-page apps</a><span class="d">One call for a whole app, including sub pages</span></div></li>
+    <li><span class="n">05</span><div><a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/05_existing_layout.py">Existing layouts</a><span class="d">Sharing a page with drawers and hostile CSS</span></div></li>
+    <li><span class="n">06</span><div><a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/06_custom_engine.py">Custom engines</a><span class="d">Your own agent, in three forms</span></div></li>
+    <li><span class="n">07</span><div><a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/07_choose_your_model.py">Choosing a model</a><span class="d">Cloud or local, with usage tracking and limits</span></div></li>
+    <li><span class="n">08</span><div><a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/08_privacy_and_security.py">Privacy and security</a><span class="d">Secrets stay out, and attacks stay inert</span></div></li>
+    <li><span class="n">09</span><div><a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/09_developer_context.py">Developer context</a><span class="d">Adding what the screen can’t show</span></div></li>
+    <li><span class="n">10</span><div><a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/10_two_users.py">Two users</a><span class="d">Sessions that never see each other</span></div></li>
+  </ol>
+</section>
+
+<section id="status" class="prose">
+  <h2>Where it stands</h2>
+  <p>Glimpse is an early alpha, for NiceGUI only, and read-only. Here is what has and hasn’t been tested.</p>
+  <div class="state">
+    <div>
+      <h3>Tested</h3>
+      <ul>
+        <li>Over 200 tests on Python 3.10, 3.12 and 3.14, plus 15 in a real browser, in CI</li>
+        <li>Grid filters, chart zoom, Shadow DOM isolation and blocked exfiltration, in a real browser</li>
+        <li>Real requests against Claude’s token counter, all within budget</li>
+        <li>Claude Opus 5.5 got 26 of 26 reference questions right. That was one run on one dashboard with a simple scorer, so read it as an early sign and not a benchmark</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Not yet</h3>
+      <ul>
+        <li>OpenAI and local models have only run against a local imitation of their APIs</li>
+        <li>Not tested behind nginx or other proxies</li>
+        <li>No screenshots, so widgets without readable data stay unread</li>
+        <li>History lasts for one page load</li>
+        <li>No actions on the page, and no other UI frameworks</li>
+      </ul>
+    </div>
+  </div>
+  <p><a href="https://github.com/axnsantana/glimpse-ai/blob/main/docs/known-limits.md">Known limits</a> · <a href="https://github.com/axnsantana/glimpse-ai/blob/main/docs/requirements-status.md">Requirements and evidence</a> · <a href="https://github.com/axnsantana/glimpse-ai/blob/main/docs/getting-started.md">Getting started</a></p>
+</section>
+
+<footer>
+  <div>Glimpse is open source under the MIT license.</div>
+  <div><a href="https://github.com/axnsantana/glimpse-ai">GitHub</a> · <a href="https://pypi.org/project/glimpse-ai/">PyPI</a></div>
+</footer>
+
+</div>
+<script>
+(function () {
+  var buttons = document.querySelectorAll('.switch button');
+  var panels = document.querySelectorAll('[data-panel]');
+  buttons.forEach(function (button) {
+    button.addEventListener('click', function () {
+      var view = button.getAttribute('data-view');
+      buttons.forEach(function (other) { other.setAttribute('aria-pressed', String(other === button)); });
+      panels.forEach(function (panel) { panel.hidden = panel.getAttribute('data-panel') !== view; });
+    });
+  });
+  var copy = document.getElementById('copy');
+  copy.addEventListener('click', function () {
+    var text = document.getElementById('install').textContent;
+    var done = function () { copy.textContent = 'Copied'; setTimeout(function () { copy.textContent = 'Copy'; }, 1500); };
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(done).catch(function () { selectInstall(); });
+    } else { selectInstall(); }
+  });
+  function selectInstall() {
+    var range = document.createRange();
+    range.selectNodeContents(document.getElementById('install'));
+    var selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+})();
+</script>
+</body>
+</html>
