@@ -1,0 +1,76 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "glimpse-ai"
+version = "0.1.0"
+description = "Add an AI assistant that can see the page to your NiceGUI app, in one line."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Alex Santana" }]
+keywords = ["nicegui", "ai", "assistant", "llm", "dashboard"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Framework :: FastAPI",
+]
+# 3.19.0 is the first release with fixes for every NiceGUI advisory published so far (SEC-9).
+dependencies = ["nicegui>=3.19.0,<4"]
+
+[project.optional-dependencies]
+anthropic = ["anthropic>=2.3,<3"]
+openai = ["openai>=3,<4"]
+dev = [
+    "ag-ui-protocol>=1.0",
+    "anthropic>=2.3,<3",
+    "matplotlib",
+    "numpy",
+    "openai>=3,<4",
+    "pandas",
+    "playwright",
+    "plotly",
+    "pytest>=9",
+    "pytest-asyncio",
+    "pytest-timeout",
+    "ruff",
+]
+
+[project.urls]
+Repository = "https://github.com/axnsantana/glimpse"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/glimpse"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+timeout = 120
+main_file = ""
+markers = [
+    "e2e: drives a real browser with Playwright",
+    "allow_error_logs: the test expects an ERROR log",
+    "live: calls a real model and spends money. Needs GLIMPSE_EVAL_MODEL",
+]
+addopts = "-p nicegui.testing.user_plugin -m 'not e2e and not live'"
+
+[tool.ruff]
+line-length = 130
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.format]
+quote-style = "preserve"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC", "RUF"]
+ignore = ["RUF012"]
+
+[tool.ruff.lint.per-file-ignores]
+"examples/*" = ["N999"]
+"src/glimpse/prompt.py" = ["E501"]
+"tests/*" = ["E501"]
