@@ -4,11 +4,11 @@ You choose the model, and Glimpse does not depend on any cloud service of its ow
 
 ## Model strings
 
-| `model=` | Provider | Install | Credentials |
+| `model=` | Provider | Needs | Credentials |
 |---|---|---|---|
-| `anthropic:claude-opus-5-5` | Anthropic | `glimpse-ai[anthropic]` | `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` or an `ant auth login` profile |
-| `openai:gpt-5` | OpenAI | `glimpse-ai[openai]` | `OPENAI_API_KEY` |
-| `ollama:llama3.2` | A local Ollama server | `glimpse-ai[openai]` | None |
+| `anthropic:claude-opus-5-5` | Anthropic | The `anthropic` package | `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` or an `ant auth login` profile |
+| `openai:gpt-5` | OpenAI | The `openai` package | `OPENAI_API_KEY` |
+| `ollama:llama3.2` | A local Ollama server | The `openai` package | None |
 
 Any other OpenAI-compatible server (vLLM, LM Studio, a gateway) works with no special handling:
 

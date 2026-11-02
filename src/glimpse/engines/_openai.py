@@ -1,6 +1,6 @@
 """OpenAI, and any OpenAI-compatible endpoint such as Ollama, vLLM or LM Studio (ENG-5).
 
-Install with glimpse-ai[openai]. A local model needs nothing but base_url.
+Needs the openai package, an optional extra. A local model needs nothing but base_url.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ class OpenAIProvider:
             import openai
         except ImportError as error:
             raise EngineError('The OpenAI SDK is not installed on the server. '
-                              'Run: pip install "glimpse-ai[openai]"') from error
+                              'Run: pip install openai') from error
         self.openai = openai
         self.model = model
         self.custom_endpoint = base_url is not None

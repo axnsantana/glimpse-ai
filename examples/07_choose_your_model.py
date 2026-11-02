@@ -1,15 +1,15 @@
 """Choosing a model: cloud, or local through an OpenAI-compatible endpoint.
 
-Install the extra for your provider, then run with a key:
+Install the SDK for your provider, then run with a key:
 
-    pip install "glimpse-ai[anthropic]"
+    pip install anthropic
     ANTHROPIC_API_KEY=... python examples/07_choose_your_model.py
 
 Other models, chosen with GLIMPSE_MODEL:
 
     GLIMPSE_MODEL=anthropic:claude-sonnet-5-5      a cheaper Claude model
-    GLIMPSE_MODEL=openai:gpt-5                     needs glimpse-ai[openai] and OPENAI_API_KEY
-    GLIMPSE_MODEL=ollama:llama3.2                  local, needs glimpse-ai[openai] and Ollama
+    GLIMPSE_MODEL=openai:gpt-5                     needs pip install openai, and OPENAI_API_KEY
+    GLIMPSE_MODEL=ollama:llama3.2                  local, needs pip install openai, and Ollama
 
 This example also shows the exact system prompt override, the usage hook, and a
 per-session spending limit. Prices are yours to supply, because they change.

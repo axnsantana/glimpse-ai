@@ -1,4 +1,4 @@
-"""Claude, through the official anthropic SDK. Install with glimpse-ai[anthropic]."""
+"""Claude, through the official anthropic SDK. Needs the anthropic package, an optional extra."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ class AnthropicProvider:
             import anthropic
         except ImportError as error:
             raise EngineError('The Anthropic SDK is not installed on the server. '
-                              'Run: pip install "glimpse-ai[anthropic]"') from error
+                              'Run: pip install anthropic') from error
         self.anthropic = anthropic
         self.model = model
         self.first_party = base_url is None

@@ -306,6 +306,6 @@ async def test_missing_sdk_says_which_extra_to_install(monkeypatch):
 
     monkeypatch.setattr(builtins, '__import__', fake_import)
     turn, _ = await answer(DirectEngine('anthropic:claude-opus-5-5'))
-    assert 'glimpse-ai[anthropic]' in turn.error
+    assert 'pip install anthropic' in turn.error
     turn, _ = await answer(DirectEngine('openai:gpt-5'))
-    assert 'glimpse-ai[openai]' in turn.error
+    assert 'pip install openai' in turn.error
