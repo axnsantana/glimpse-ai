@@ -84,6 +84,7 @@ Everything runs in your NiceGUI process. Read [Data flow](docs/data-flow.md) to 
 - [Versioning](docs/versioning.md)
 - [NiceGUI internals](docs/nicegui-internals.md)
 - [Requirements status](docs/requirements-status.md): each SRS requirement and its evidence
+- [Going public](docs/going-public.md): the steps to release the code and publish the presentation page in `site/`
 
 ## Development
 
