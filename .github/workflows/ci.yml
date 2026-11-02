@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.12', '3.14']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e ".[dev]"
+      - run: ruff check src tests examples
+      - run: pytest
+
+  nicegui-versions:
+    # The minimum supported release, and the next one that may break us (DEV-6).
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.nicegui == 'pre-release' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        nicegui: ['minimum', 'pre-release']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - run: pip install -e ".[dev]"
+      - if: matrix.nicegui == 'minimum'
+        run: pip install "nicegui==3.19.0"
+      - if: matrix.nicegui == 'pre-release'
+        run: pip install --upgrade --pre nicegui
+      - run: pytest
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - run: pip install -e ".[dev]"
+      - run: playwright install --with-deps chromium
+      - run: pytest -m e2e
