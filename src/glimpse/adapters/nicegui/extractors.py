@@ -239,13 +239,20 @@ def _is_sensitive_input(element: Element, label: str, walker: Any) -> bool:
                                                                                 walker.exclude_fields)
 
 
+TEXT_INPUTS = frozenset({'Input', 'DateInput', 'TimeInput', 'ColorInput'})
+"""Cleared, these hold '' on NiceGUI 4 and None on 3.19. The assistant sees '' on both. ui.textarea is an Input."""
+
+
 def value_input(element: Element, walker: Any) -> ElementSnapshot | None:
     label = label_of(element) or str(getattr(element, 'text', '') or '').strip() or nearby_label(element)
     snapshot = _snapshot(element, walker, 'input', label=label, has_value=True)
     if _is_sensitive_input(element, label, walker):
         snapshot.value = WITHHELD_VALUE
         return snapshot
-    snapshot.value = getattr(element, 'value', None)
+    value = getattr(element, 'value', None)
+    if value is None and TEXT_INPUTS.intersection(_compat.class_names(element)):
+        value = ''
+    snapshot.value = value
     return snapshot
 
 

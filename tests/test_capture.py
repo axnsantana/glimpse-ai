@@ -57,6 +57,26 @@ async def test_inputs_report_their_current_values(user: User):
     assert element_by_label(page_context, 'Mode').options == ['Alpha', 'Beta']
 
 
+TEXT_INPUTS = {'input': ui.input, 'textarea': ui.textarea, 'date_input': ui.date_input, 'time_input': ui.time_input,
+               'color_input': ui.color_input}
+
+
+async def test_a_cleared_text_input_reads_as_empty_on_every_nicegui_version(user: User):
+    """NiceGUI 3.19 clears text inputs to None and NiceGUI 4 to ''. The assistant sees '' on both."""
+    @ui.page('/')
+    def page():
+        for name, make in TEXT_INPUTS.items():
+            make(f'Cleared {name}', value='x').value = None
+        ui.number('Cleared number', value=1).value = None
+        attach()
+
+    page_context = await capture(user)
+    values = {e.label: e.value for e in page_context.elements if e.has_value}
+    for name in TEXT_INPUTS:
+        assert values[f'Cleared {name}'] == '', name
+    assert values['Cleared number'] is None, 'ui.number keeps None for empty on both versions'
+
+
 async def test_text_markdown_and_html_are_read_as_visible_text(user: User):
     @ui.page('/')
     def page():

@@ -1,6 +1,6 @@
 # NiceGUI internals used by Glimpse
 
-Glimpse reads NiceGUI's live element tree, which goes beyond its documented API in a few places. All private use is in [`_compat.py`](../src/glimpse/adapters/nicegui/_compat.py), and a test enforces that (NFR-7). Written against NiceGUI 3.18.0 and tested on 3.19.0.
+Glimpse reads NiceGUI's live element tree, which goes beyond its documented API in a few places. All private use is in [`_compat.py`](../src/glimpse/adapters/nicegui/_compat.py), and a test enforces that (NFR-7). Written against NiceGUI 3.18.0 and tested on 3.19.0 and 4.0.0.
 
 | What | Used for | Status |
 |---|---|---|
@@ -34,5 +34,7 @@ These answer questions from the research plan, verified in Chrome against NiceGU
 - **`ui.table` state is not browser-only.** Sort and page changes reach the server through `update:pagination`, so it needs no probe.
 - **N4: drawers.** `ui.right_drawer` cannot be shared, so Glimpse does not use one. A component attached to `<body>` avoids layouts entirely.
 - **N5: auto-index pages are gone.** The shared auto-index page that worried SEC1 does not exist in NiceGUI 3. Script mode replaced it and re-runs the page for each client. Requiring NiceGUI 3 removes that risk.
+- **DOM IDs changed in NiceGUI 4**, from `c12` to `ng-12`. Glimpse never parses one: it uses `element.html_id` for scrolling, numeric IDs in the probe, and the tests pass the DOM element to `getElement()`, which accepts it on both versions.
+- **Cleared text inputs** hold `None` on 3.19 and `''` on 4. The extractor reports `''` on both.
 - **`ui.context` has side effects.** Reading it at module level before `ui.run()` creates a client and switches NiceGUI to script mode.
 - **Plotly encodes NumPy arrays** as `{dtype, bdata}`, which is decoded with no NumPy import.

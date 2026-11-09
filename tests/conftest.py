@@ -1,15 +1,20 @@
 from __future__ import annotations
 
+import importlib
 from collections.abc import AsyncIterator, Callable
+from importlib.metadata import version
 from pathlib import Path
 
-import httpx
 import pytest
 from nicegui import core
 from nicegui.testing import User
 from nicegui.testing.user_simulation import user_simulation
 
 from .helpers import EXAMPLES
+
+# NiceGUI 4 tests with httpx2 and 3.19 with httpx. Both have the same API, and each is a dependency of the
+# NiceGUI it belongs to, so the one imported here is always installed.
+http = importlib.import_module('httpx2' if int(version('nicegui').split('.')[0]) >= 4 else 'httpx')
 
 CREDENTIAL_VARIABLES = (
     'ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN', 'OPENAI_API_KEY', 'GLIMPSE_MODEL',
@@ -51,4 +56,4 @@ def open_example() -> Callable:
 
 def second_user() -> User:
     """Another browser on the same running app."""
-    return User(httpx.AsyncClient(transport=httpx.ASGITransport(core.app), base_url='http://test'))
+    return User(http.AsyncClient(transport=http.ASGITransport(core.app), base_url='http://test'))
