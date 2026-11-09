@@ -143,13 +143,13 @@ def test_probe_reads_a_real_grid_filter_and_sort(page, serve):
     sent = what_was_sent(page)
     assert '240 rows' in sent
 
-    grid_id = page.locator('.nicegui-aggrid').get_attribute('id')[1:]
-    page.evaluate(f"""() => {{
-        const api = getElement({grid_id}).api;
-        api.setFilterModel({{region: {{filterType: 'text', type: 'equals', filter: 'APAC'}},
-                             status: {{filterType: 'text', type: 'equals', filter: 'open'}}}});
-        api.applyColumnState({{state: [{{colId: 'amount', sort: 'desc'}}]}});
-    }}""")
+    # getElement() takes the DOM element on every NiceGUI version, so the test never parses an ID (c12, ng-12).
+    page.locator('.nicegui-aggrid').evaluate("""(element) => {
+        const api = getElement(element).api;
+        api.setFilterModel({region: {filterType: 'text', type: 'equals', filter: 'APAC'},
+                            status: {filterType: 'text', type: 'equals', filter: 'open'}});
+        api.applyColumnState({state: [{colId: 'amount', sort: 'desc'}]});
+    }""")
     page.wait_for_timeout(300)
     ask(page, 'What are the current filters?')
     sent = what_was_sent(page)
@@ -168,12 +168,11 @@ def test_probe_reads_real_chart_zoom_and_legend(page, serve):
     page.goto(serve('02'))
     page.wait_for_timeout(600)
     open_panel(page)
-    chart_id = page.locator('.nicegui-echart').get_attribute('id')[1:]
-    page.evaluate(f"""() => {{
-        const chart = getElement({chart_id}).chart;
-        chart.dispatchAction({{type: 'dataZoom', start: 25, end: 50}});
-        chart.dispatchAction({{type: 'legendUnSelect', name: 'Cost'}});
-    }}""")
+    page.locator('.nicegui-echart').evaluate("""(element) => {
+        const chart = getElement(element).chart;
+        chart.dispatchAction({type: 'dataZoom', start: 25, end: 50});
+        chart.dispatchAction({type: 'legendUnSelect', name: 'Cost'});
+    }""")
     page.wait_for_timeout(300)
     ask(page, 'What is on this page?')
     sent = what_was_sent(page)

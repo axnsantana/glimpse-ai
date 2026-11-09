@@ -24,7 +24,8 @@ classifiers = [
     "Framework :: FastAPI",
 ]
 # 3.19.0 is the first release with fixes for every NiceGUI advisory published so far (SEC-9).
-dependencies = ["nicegui>=3.19.0,<4"]
+# NiceGUI 4 needs Python 3.11, so on Python 3.10 pip installs 3.19.
+dependencies = ["nicegui>=3.19.0,<5"]
 
 [project.optional-dependencies]
 anthropic = ["anthropic>=2.3,<3"]

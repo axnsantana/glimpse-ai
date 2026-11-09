@@ -27,7 +27,7 @@ Users get a side panel where they can ask about what is on their screen. The ass
 pip install "glimpse-ai[anthropic]"
 ```
 
-Pick the extra for your model: `anthropic`, `vertex` for Google Cloud Vertex AI, `gemini`, `openai` for OpenAI and local models, and `adk` for Google ADK agents. The package is `glimpse-ai`, and you import it as `glimpse`. Python 3.10 or later and NiceGUI 3.19 or later are required. Gemini and ADK need Python 3.11 or later.
+Pick the extra for your model: `anthropic`, `vertex` for Google Cloud Vertex AI, `gemini`, `openai` for OpenAI and local models, and `adk` for Google ADK agents. The package is `glimpse-ai`, and you import it as `glimpse`. Python 3.10 or later and NiceGUI 3.19 or 4 are required. NiceGUI 4, Gemini and ADK need Python 3.11 or later.
 
 ## Try it
 

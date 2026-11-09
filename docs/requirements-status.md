@@ -105,7 +105,7 @@ Claude Opus 5.5 has been run live on Anthropic's API. No other provider has, inc
 | 2 | The initial idea note was not read | Read. It adds nothing that changes the requirements |
 | 3 | The license was not chosen | The repository already has MIT |
 | 4 | Numeric targets for latency, budget and accuracy | Still waiting for spikes S0 and S1. The default budget of 16,000 tokens is a starting point |
-| 5 | Minimum NiceGUI and Python versions | NiceGUI 3.19.0, Python 3.10 |
+| 5 | Minimum NiceGUI and Python versions | NiceGUI 3.19.0, Python 3.10. Supports NiceGUI 4 |
 | 6 | Visibility policy | [visibility-policy.md](visibility-policy.md) |
 
 ### Where this differs from the Gemini research

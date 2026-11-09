@@ -30,7 +30,7 @@ def test_every_example_is_listed():
 
 def test_install_requirements_match_the_project():
     project = (ROOT / 'pyproject.toml').read_text()
-    assert re.search(r'nicegui>=3\.19', project) and 'NiceGUI 3.19 or later' in PAGE
+    assert re.search(r'nicegui>=3\.19\.0,<5', project) and 'NiceGUI 3.19 or 4' in PAGE
     assert 'requires-python = ">=3.10"' in project and 'Python 3.10 or later' in PAGE
 
 

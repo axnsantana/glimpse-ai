@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **NiceGUI 4.** Glimpse now supports NiceGUI 3.19 and 4. NiceGUI 4 needs Python 3.11, so on Python 3.10 pip keeps installing 3.19.
+- A text input cleared with its clear button now reads as empty (`''`) on every NiceGUI version. On 3.19 the assistant used to see `null`.
+
 ## 0.1.0 (2026-11-09)
 
 The first MVP: NiceGUI only, read-only, with direct, council, ADK, offline and custom engines. See `docs/requirements-status.md`.

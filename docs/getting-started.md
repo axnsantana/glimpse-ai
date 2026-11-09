@@ -8,7 +8,7 @@ Glimpse adds an assistant in a side panel to a NiceGUI app. It answers questions
 pip install "glimpse-ai[anthropic]"    # or [vertex] for Vertex AI, [gemini], [openai] for OpenAI and local models, [adk]
 ```
 
-You import it as `glimpse`. Python 3.10 or later and NiceGUI 3.19 or later are required.
+You import it as `glimpse`. Python 3.10 or later and NiceGUI 3.19 or 4 are required. NiceGUI 4 needs Python 3.11 or later.
 
 ## Add it to a page
 
