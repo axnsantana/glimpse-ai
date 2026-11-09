@@ -19,7 +19,7 @@ Users get a side panel where they can ask about what is on their screen. The ass
 
 ![Glimpse beside a sales dashboard. After the user filters the grid, the assistant reports the 21 orders on screen and the highest amount among them](https://raw.githubusercontent.com/axnsantana/glimpse-ai/main/docs/images/real-model-filtered-grid.png)
 
-> **Status: 0.1, an early MVP.** Capture, the panel and the security defaults are tested in a real browser. With Claude Opus 5.5, it answered all 26 reference questions correctly, in one run on a single dashboard with a simple scorer. That is a good early sign, not a full evaluation. See [known limits](https://github.com/axnsantana/glimpse-ai/blob/main/docs/known-limits.md).
+> **Status: 0.2, an early MVP.** Capture, the panel and the security defaults are tested in a real browser. With Claude Opus 5.5, it answered all 26 reference questions correctly, in one run on a single dashboard with a simple scorer. That is a good early sign, not a full evaluation. See [known limits](https://github.com/axnsantana/glimpse-ai/blob/main/docs/known-limits.md).
 
 ## Install
 

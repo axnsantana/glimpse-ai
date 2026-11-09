@@ -23,7 +23,7 @@ from .serialize import Detail, json_serializer, text_serializer
 from .session import ChatSession, Turn
 from .tools import Tool
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 __all__ = [
     'DEFAULT_SYSTEM_PROMPT',
