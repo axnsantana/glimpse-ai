@@ -11,11 +11,16 @@ requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Alex Santana" }]
-keywords = ["nicegui", "ai", "assistant", "llm", "dashboard"]
+keywords = ["nicegui", "ai", "assistant", "llm", "dashboard", "vertex-ai", "adk"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Framework :: FastAPI",
 ]
 # 3.19.0 is the first release with fixes for every NiceGUI advisory published so far (SEC-9).
@@ -24,9 +29,16 @@ dependencies = ["nicegui>=3.19.0,<4"]
 [project.optional-dependencies]
 anthropic = ["anthropic>=2.3,<3"]
 openai = ["openai>=3,<4"]
+# Vertex AI: Claude through the Anthropic SDK with Google auth, and Gemini through google-genai.
+# google-genai and google-adk need Python 3.11 or later, so on 3.10 only Claude on Vertex AI installs.
+vertex = ["anthropic[vertex]>=2.3,<3", "google-genai>=2.34,<3; python_version >= '3.11'"]
+gemini = ["google-genai>=2.34,<3; python_version >= '3.11'"]
+adk = ["google-adk>=2.14,<3; python_version >= '3.11'"]
 dev = [
     "ag-ui-protocol>=1.0",
-    "anthropic>=2.3,<3",
+    "anthropic[vertex]>=2.3,<3",
+    "google-adk>=2.14,<3; python_version >= '3.11'",
+    "google-genai>=2.34,<3; python_version >= '3.11'",
     "matplotlib",
     "numpy",
     "openai>=3,<4",
@@ -41,9 +53,15 @@ dev = [
 
 [project.urls]
 Repository = "https://github.com/axnsantana/glimpse-ai"
+Changelog = "https://github.com/axnsantana/glimpse-ai/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/glimpse"]
+
+[tool.hatch.build.targets.sdist]
+# An explicit list, so that untracked files such as .env, .vscode/ or a virtual environment
+# kept in the project folder can never reach PyPI. An upload cannot be taken back.
+include = ["src/glimpse", "tests", "examples", "docs", "README.md", "CHANGELOG.md", "LICENSE", "pyproject.toml"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

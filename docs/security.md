@@ -38,6 +38,8 @@ The same applies to `system_prompt=`.
 - Sanitizing your own use of `ui.html` and `ui.markdown`.
 - Rate limits and app-wide spending limits. Per-session limits are built in, but they reset on reload, so they do not stop a determined user. Use `on_usage` and your own accounting if that matters.
 - Custom engines. Sanitizing and fencing still apply to them, but a tool your engine adds is yours to secure.
+- ADK agents. Glimpse adds only its read-only page tools. Tools, callbacks and sub-agents you give your agent run with whatever access your code gives them, and a prompt injection in page text can try to call them. Keep tools that change things out of an agent that reads untrusted pages, or put a confirmation step in front of them.
+- Google Cloud credentials. Vertex AI calls use the server's Application Default Credentials. Give the service account only the Vertex AI User role, so a leaked credential cannot do more.
 
 ## Minimum NiceGUI version
 

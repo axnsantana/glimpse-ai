@@ -27,6 +27,8 @@ def attach(
     *,
     engine: Any = 'auto',
     model: str | None = None,
+    project: str | None = None,
+    location: str | None = None,
     context: str | Callable[[], str] = '',
     system_prompt: Any = None,
     budget: int = 16000,
@@ -57,9 +59,13 @@ def attach(
     page of the app. All arguments are optional, and all data stays on the server unless
     the chosen engine sends it to its model.
 
-    :param engine: "auto" (a model if credentials are found, otherwise the offline demo), "direct", "offline",
-        an object with respond(messages, page), or a function (messages, page) yielding text
-    :param model: "provider:model", for example "anthropic:claude-opus-5-5", "openai:gpt-5" or "ollama:llama3.2"
+    :param engine: "auto" (a model if credentials are found, otherwise the offline demo), "direct", "council"
+        (an actor, a critic and a mediator), "adk" (a Google ADK agent built from model), "offline", your own
+        ADK agent, an object with respond(messages, page), or a function (messages, page) yielding text
+    :param model: "provider:model", for example "anthropic:claude-opus-5-5", "vertex:claude-opus-5-5",
+        "vertex:gemini-flash-latest", "gemini:gemini-flash-latest", "openai:gpt-5" or "ollama:llama3.2"
+    :param project: the Google Cloud project for vertex: models. Default: GOOGLE_CLOUD_PROJECT
+    :param location: the Vertex AI location for vertex: models. Default: GOOGLE_CLOUD_LOCATION, then "global"
     :param context: extra facts for the assistant, or a function returning them. End users can extract this text
     :param system_prompt: replaces the built-in system prompt exactly (a string, or a function of the page)
     :param budget: the most tokens one request may use, estimated unless count_tokens is exact
@@ -94,10 +100,10 @@ def attach(
         allowed_link_hosts=tuple(allowed_link_hosts), probe=probe, probe_timeout=probe_timeout,
         request_timeout=request_timeout,
     )
-    resolved = resolve_engine(engine, model=model, system_prompt=system_prompt)
+    resolved = resolve_engine(engine, model=model, system_prompt=system_prompt, project=project, location=location)
     overhead = getattr(resolved, 'overhead_text', None)
     if overhead is not None:
-        check_budget(budget, overhead(PageContext()), count_tokens)
+        check_budget(budget, overhead(PageContext()), count_tokens, getattr(resolved, 'reserved_tokens', 0))
     options = {'title': title, 'suggestions': tuple(suggestions), 'width': width, 'push': push, 'open': open,
                'inspector': inspector}
 

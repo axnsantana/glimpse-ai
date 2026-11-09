@@ -216,6 +216,7 @@ class ChatSession:
         messages, page = await asyncio.to_thread(
             prepare_request, page, list(self.history), turn.question, self.config,
             overhead_text=overhead(page) if overhead else '',
+            reserved_tokens=getattr(self.engine, 'reserved_tokens', 0),
         )
         turn.question_sent = messages[-1].content
         turn.status, turn.progress = 'thinking', 'Thinking'

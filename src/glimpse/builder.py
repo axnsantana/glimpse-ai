@@ -30,13 +30,13 @@ ESTIMATE_MARGIN = 0.75
 """Plan to use this share of the budget when tokens are estimated. Measured estimates ran as low as 74% of the real count."""
 
 
-def check_budget(budget: int, overhead_text: str, count: Callable[[str], int]) -> None:
+def check_budget(budget: int, overhead_text: str, count: Callable[[str], int], reserved_tokens: int = 0) -> None:
     """Fail at setup, not on a user's first question, if an engine's fixed text leaves no room for the page."""
-    overhead = count(overhead_text) + FENCE_OVERHEAD_TOKENS
+    overhead = count(overhead_text) + FENCE_OVERHEAD_TOKENS + reserved_tokens
     margin = ESTIMATE_MARGIN if count is estimate_tokens else 1.0
     if overhead > budget * margin * MAX_OVERHEAD_SHARE:
         needed = int(overhead / (margin * MAX_OVERHEAD_SHARE)) + 1
-        raise ValueError(f'budget={budget} is too small: the system prompt and tools alone take about {overhead} '
+        raise ValueError(f'budget={budget} is too small: the engine\'s prompts and tools alone take about {overhead} '
                          f'tokens. Use a budget of at least {needed}, or a shorter system prompt.')
 
 
@@ -47,6 +47,7 @@ def prepare_request(
     config: GlimpseConfig,
     *,
     overhead_text: str = '',
+    reserved_tokens: int = 0,
 ) -> tuple[list[Message], PageContext]:
     """Redact, shape and budget one request. Runs in a worker thread, as tables can be large."""
     count = config.count_tokens
@@ -58,7 +59,8 @@ def prepare_request(
         question = config.redact(question)
 
     total = int(config.budget * ESTIMATE_MARGIN) if count is estimate_tokens else config.budget
-    overhead = count(overhead_text) + FENCE_OVERHEAD_TOKENS
+    # reserved_tokens is room an engine adds to each request itself, such as the council's drafts.
+    overhead = count(overhead_text) + FENCE_OVERHEAD_TOKENS + reserved_tokens
     if overhead > total * MAX_OVERHEAD_SHARE:
         # A system prompt function can grow with the page, which attach() cannot check in advance.
         raise EngineError('This assistant is misconfigured: its system prompt is too large for its token budget.')

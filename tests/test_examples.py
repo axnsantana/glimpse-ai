@@ -339,3 +339,43 @@ async def test_10_two_users_never_see_each_other(open_example):
         assert '310' in ben_turn.page.rendered and '12450' not in ben_turn.page.rendered
         assert 'PT50' not in ben_turn.page.rendered and 'DE89' not in ana_turn.page.rendered
         assert ana_panel.session.history is not ben_panel.session.history
+
+
+# 11: Vertex AI, the council engine and an ADK agent.
+
+
+async def test_11_without_a_project_each_engine_says_what_is_missing(open_example):
+    async with open_example('11') as user:
+        for path in ('/', '/council'):
+            await user.open(path)
+            turn = await ask(panel_of(user), 'Which region missed its target?')
+            assert turn.status == 'error'
+            assert 'GOOGLE_CLOUD_PROJECT' in turn.error or 'not installed' in turn.error
+
+
+async def test_11_the_project_and_region_reach_every_council_role(open_example, monkeypatch):
+    import glimpse
+
+    monkeypatch.setenv('GOOGLE_CLOUD_PROJECT', 'my-project')
+    monkeypatch.setenv('GOOGLE_CLOUD_LOCATION', 'us-east5')
+    async with open_example('11') as user:
+        await user.open('/council')
+        engine = panel_of(user).session.engine
+        assert isinstance(engine, glimpse.CouncilEngine)
+        assert engine.actor.model == 'vertex:claude-opus-5-5'
+        for role in (engine.actor, engine.critic, engine.mediator):
+            assert (role.project, role.location) == ('my-project', 'us-east5')
+
+
+async def test_11_your_adk_agent_keeps_its_own_tool(open_example):
+    import pytest
+
+    pytest.importorskip('google.adk')
+    import glimpse
+
+    async with open_example('11') as user:
+        await user.open('/adk')
+        engine = panel_of(user).session.engine
+        assert isinstance(engine, glimpse.AdkEngine)
+        assert engine.agent.name == 'sales_analyst'
+        assert [tool.__name__ for tool in engine.agent.tools] == ['eur_to_usd']

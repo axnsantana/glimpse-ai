@@ -22,8 +22,8 @@ def test_core_does_not_import_nicegui_or_any_provider():
     """NFR-1 and NFR-6: only the adapter touches NiceGUI, and SDKs load only when used."""
     output = run_python(
         'import sys, glimpse\n'
-        'print(sorted(m for m in ("nicegui", "anthropic", "openai", "plotly", "numpy", "pandas", "ag_ui") '
-        'if m in sys.modules))'
+        'print(sorted(m for m in ("nicegui", "anthropic", "openai", "plotly", "numpy", "pandas", "ag_ui", '
+        '"google.adk", "google.genai", "google.auth") if m in sys.modules))'
     )
     assert output == '[]'
 
@@ -87,7 +87,16 @@ def required_dependencies() -> list[str]:
 def test_declared_dependencies_stay_near_zero():
     assert [item.split('>')[0] for item in required_dependencies()] == ['nicegui']
     text = (ROOT / 'pyproject.toml').read_text()
-    assert 'anthropic = [' in text and 'openai = [' in text, 'providers stay optional extras'
+    for extra in ('anthropic', 'openai', 'vertex', 'gemini', 'adk'):
+        assert f'{extra} = [' in text, f'{extra} stays an optional extra'
+
+
+def test_the_version_is_the_same_everywhere():
+    """The release workflow publishes the version in pyproject.toml, so the package must agree with it."""
+    import glimpse
+
+    declared = re.search(r'^version = "([^"]+)"', (ROOT / 'pyproject.toml').read_text(), re.MULTILINE).group(1)
+    assert glimpse.__version__ == declared
 
 
 def test_minimum_nicegui_covers_the_advisory_list():
@@ -104,6 +113,6 @@ def test_every_example_is_listed_and_has_try_this_docs():
 
 def test_required_docs_exist():
     """NFR-8."""
-    for name in ('getting-started', 'models', 'data-flow', 'visibility-policy', 'security', 'known-limits',
-                 'versioning', 'nicegui-internals'):
+    for name in ('getting-started', 'models', 'engines', 'data-flow', 'visibility-policy', 'security', 'known-limits',
+                 'versioning', 'nicegui-internals', 'releasing'):
         assert (ROOT / 'docs' / f'{name}.md').is_file(), name

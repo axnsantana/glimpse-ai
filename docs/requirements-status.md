@@ -6,7 +6,7 @@ Each requirement from the Software Requirements Specification (draft 0.1) for th
 - **Partial** says what is missing.
 - **Not done** means it is out of this MVP.
 
-Claude Opus 5.5 has been run live. No other provider has, so anything marked "fake server" ran against the real SDK and a local server speaking the provider's wire format.
+Claude Opus 5.5 has been run live on Anthropic's API. No other provider has, including Vertex AI and the Gemini API, so anything marked "fake server" ran against the real SDK and a local server speaking the provider's wire format.
 
 ## Page capture
 
@@ -49,11 +49,11 @@ Claude Opus 5.5 has been run live. No other provider has, so anything marked "fa
 | ID | Priority | Status | Evidence or gap |
 |---|---|---|---|
 | DEV-1 | MUST, prov. | Done | Example 01. Assumption A2 still needs real apps from other developers |
-| DEV-2 | MUST | Done | [models.md](models.md), example 07 |
+| DEV-2 | MUST | Done | [models.md](models.md), examples 07 and 11. Vertex AI with a project and location, for Claude and Gemini, on a fake server only: `test_claude_on_vertex_uses_the_project_region_and_no_api_key`, `test_gemini_on_vertex_uses_the_project_and_location` |
 | DEV-3 | MUST, prov. | Done | Example 04, `test_script_mode_gets_a_panel_per_client` and `test_root_function_app_follows_sub_page_navigation` (e2e). The shared auto-index page no longer exists in NiceGUI 3 |
 | DEV-4 | SHOULD | Done | `test_exact_system_prompt_override` |
 | DEV-5 | SHOULD | Done | `test_usage_hook_cost_and_session_limits`. Limits are per session, so they reset on reload |
-| DEV-6 | SHOULD | Partial | [versioning.md](versioning.md) is written and `.github/workflows/ci.yml` includes the pre-release job, but the workflow has not yet run on GitHub |
+| DEV-6 | SHOULD | Partial | [versioning.md](versioning.md) is written, and CI with the pre-release job has passed on GitHub. CI does not run on a schedule, so a new NiceGUI release goes unnoticed until the next push. Releases publish through `.github/workflows/release.yml` ([releasing.md](releasing.md)), which has not published yet |
 
 ## Engines
 
@@ -61,10 +61,10 @@ Claude Opus 5.5 has been run live. No other provider has, so anything marked "fa
 |---|---|---|---|
 | ENG-1 | MUST | Done | `engine.py`, `test_engines.py`. Cancellation closes the iterator |
 | ENG-2 | SHOULD | Done | `test_async_generator_of_str`, example 06 |
-| ENG-3 | MUST | Done | Live on Claude Opus 5.5, including tool rounds. `test_openai_tool_round_trip_with_the_real_sdk` covers OpenAI on a fake server only. Uses provider SDKs and no agent framework |
-| ENG-4 | SHOULD, prov. | Not done | Example 06 shows the adapter's shape with a stand-in agent. No ADK adapter exists, and spike S2 was not run |
+| ENG-3 | MUST | Done | Live on Claude Opus 5.5, including tool rounds. OpenAI, Gemini and Vertex AI on a fake server only. Uses provider SDKs and no agent framework |
+| ENG-4 | SHOULD, prov. | Done, not run live | `AdkEngine` in `engines/adk.py`, [engines.md](engines.md), example 11. `test_adk.py` runs the real ADK runner with a scripted model, and ADK's own Gemini class against a fake server. No ADK type reaches the UI layer. Spike S2 as designed, a second framework through the same contract, was not run |
 | ENG-5 | SHOULD | Done, fake server | `test_local_model_through_an_openai_compatible_endpoint`. Not run against real Ollama |
-| ENG-6 | MAY, prov. | Not done | Council engine, pending spike S3 |
+| ENG-6 | MAY, prov. | Done, not measured | `CouncilEngine` in `engines/council.py`: actor, critic and mediator, on any provider. `test_council.py` checks the flow with scripted models. Built ahead of spike S3 at the owner's request, so whether it improves answers is unknown |
 | ENG-7 | SHOULD | Done | `test_events.py` maps every event onto `ag-ui-protocol` |
 | ENG-8 | MAY | Not done | |
 
@@ -87,7 +87,7 @@ Claude Opus 5.5 has been run live. No other provider has, so anything marked "fa
 
 | ID | Priority | Status | Evidence or gap |
 |---|---|---|---|
-| NFR-1 | MUST | Done | NiceGUI is the only required dependency, and `test_core_does_not_import_nicegui_or_any_provider` checks the imports |
+| NFR-1 | MUST | Done | NiceGUI is the only required dependency, and `test_core_does_not_import_nicegui_or_any_provider` checks the imports, including ADK, google-genai and Google auth |
 | NFR-2 | SHOULD | Partial | Heartbeats, cancel on close and a reconnect test exist. **Not tested behind nginx** |
 | NFR-3 | MUST | Done | `test_concurrent_sessions_*` |
 | NFR-4 | SHOULD, prov. | Partial | `test_snapshot_does_not_block_the_event_loop` applies a smoke limit on 300,000 rows. Numeric targets wait for S1 |

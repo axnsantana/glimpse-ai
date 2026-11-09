@@ -13,22 +13,14 @@ The repository is private for now, and these are the steps to make it public, in
 2. **Run every test:** `pytest`, `pytest -m e2e` and, if the prompt or tools changed, `pytest -m live -s`.
 3. **Check the NiceGUI advisories** with the command in [security.md](security.md), and raise the minimum version if a new one applies.
 4. **Update the numbers on `site/index.html`** if they changed: the test counts, the 26 of 26 result, and the example answers.
-5. **Check the PyPI token.** Use a token scoped to `glimpse-ai`, and revoke the account-wide token used for the first upload.
+5. **Check the PyPI tokens.** The release workflow uses trusted publishing and needs no token, so revoke the account-wide token used for the first upload. See [releasing.md](releasing.md).
 
 ## Make it public
 
 These steps have effects that cannot be fully undone, because copies can be made once code is public.
 
 1. **Make the repository public:** Settings, General, Danger Zone.
-2. **Publish the real release.** Until now, PyPI has only held the empty placeholder `0.0.1`, so the install command on the page does not work until this is done.
-   ```bash
-   rm -rf dist && python -m build
-   python -m zipfile -l dist/*.whl       # Check the contents first. An upload cannot be taken back
-   tar tzf dist/*.tar.gz
-   python -m twine check --strict dist/*
-   python -m twine upload dist/*
-   ```
-   Check that the sdist holds no `.env`, virtual environment or other stray files. Hatchling follows `.gitignore`, but look anyway. Then try the release in a clean environment:
+2. **Publish the real release** through the release workflow, as [releasing.md](releasing.md) describes: set up the trusted publisher once, do a dry run, then publish a GitHub release tagged `v0.1.0`. Until now, PyPI has only held the empty placeholder `0.0.1`, so the install command on the page does not work until this is done. The workflow lists every file in the build and refuses `.env`, virtual environments and other stray files, and the sdist only includes an explicit list of folders. Read the file lists in the dry run anyway. Then try the release in a clean environment:
    ```bash
    python -m venv /tmp/try && /tmp/try/bin/pip install "glimpse-ai[anthropic]"
    ```

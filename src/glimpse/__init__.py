@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any
 
 from .config import GlimpseConfig, Pricing
 from .engine import Engine, EngineError, Message
-from .engines import DirectEngine, OfflineEngine
+from .engines import AdkEngine, CouncilEngine, DirectEngine, OfflineEngine
 from .events import Usage
 from .page import ElementSnapshot, PageContext, Series, TableData
 from .prompt import DEFAULT_SYSTEM_PROMPT
@@ -27,7 +27,9 @@ __version__ = '0.1.0'
 
 __all__ = [
     'DEFAULT_SYSTEM_PROMPT',
+    'AdkEngine',
     'ChatSession',
+    'CouncilEngine',
     'Detail',
     'DirectEngine',
     'ElementSnapshot',

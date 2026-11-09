@@ -16,6 +16,11 @@ This is version 0.1, and these are the limits we know of.
 - **OpenAI.** The code runs against the real SDK and a local server that imitates the API, but no request has reached OpenAI. The `gpt-5` default is an assumption.
 - **Local models.** `ollama:` was only tested against the same local server, so the quality drop from a cloud model is unknown.
 - **Other Claude models.** Only Opus 5.5 was run. The fallback path was never triggered by a real refusal.
+- **Vertex AI.** Claude and Gemini on Vertex AI run against the real SDKs and a local server, with stand-in Google credentials. No request has reached Google Cloud, so region availability, quotas and real credential errors are untested.
+- **Gemini.** No Gemini model has answered a real question, so its quality on page questions is unknown. The `gemini-flash-latest` default is an assumption, and the token estimate was calibrated on Claude.
+- **The council engine.** Its flow is tested with scripted models only. Spike S3 has not run, so whether its extra calls give better answers is unknown. An approved draft appears in one piece rather than streaming.
+- **The ADK engine.** Tested with the real ADK runner and a scripted model, and with ADK's Gemini class against a local server. No real agent has run. Only `sub_agents` trees get the page tools, and ADK 2's graph `Workflow` API was not tried.
+- **Python 3.10.** google-genai and google-adk need Python 3.11 or later, so on 3.10 only Claude on Vertex AI is available from Google Cloud.
 
 **Not tested in real conditions:**
 
@@ -58,4 +63,4 @@ The tests pass on Python 3.10, but stopping the server at the moment an answer f
 
 ## Not in this version
 
-Actions on the page, the council engine, a second framework, an ADK adapter (ENG-4), an AG-UI inbound adapter and `glimpse[mcp]`. See [requirements-status.md](requirements-status.md).
+Actions on the page, a second framework, a second agent framework besides ADK, an AG-UI inbound adapter and `glimpse[mcp]`. See [requirements-status.md](requirements-status.md).

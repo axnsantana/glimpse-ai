@@ -104,8 +104,8 @@ async def test_engines_can_mix_events_and_text():
 def test_not_an_engine():
     with pytest.raises(TypeError):
         as_engine(42)
-    with pytest.raises(ValueError):
-        resolve_engine('council')
+    with pytest.raises(ValueError, match='Unknown engine'):
+        resolve_engine('committee')
 
 
 async def test_cancel_closes_the_engine_and_keeps_the_partial_answer():
@@ -322,6 +322,25 @@ def test_model_strings():
     assert parse_model('claude-sonnet-5-5') == ('anthropic', 'claude-sonnet-5-5')
     assert parse_model('gpt-5') == ('openai', 'gpt-5')
     assert parse_model('vendor/model:free') == ('openai', 'vendor/model:free')
+    assert parse_model('vertex:claude-opus-5-5') == ('vertex', 'claude-opus-5-5')
+    assert parse_model('vertex:gemini-flash-latest') == ('vertex', 'gemini-flash-latest')
+    assert parse_model('gemini:gemini-flash-latest') == ('gemini', 'gemini-flash-latest')
+    assert parse_model('gemini-flash-latest') == ('gemini', 'gemini-flash-latest')
+
+
+def test_google_cloud_settings_come_from_arguments_then_the_environment(monkeypatch):
+    from glimpse.engines.direct import google_cloud
+
+    with pytest.raises(EngineError, match='GOOGLE_CLOUD_PROJECT'):
+        google_cloud()
+    assert (google_cloud('p').project, google_cloud('p').location) == ('p', 'global')
+    monkeypatch.setenv('GOOGLE_CLOUD_PROJECT', 'env-project')
+    monkeypatch.setenv('CLOUD_ML_REGION', 'us-east5')
+    assert (google_cloud().project, google_cloud().location) == ('env-project', 'us-east5')
+    monkeypatch.setenv('GOOGLE_CLOUD_LOCATION', 'europe-west4')
+    assert google_cloud().location == 'europe-west4', 'the Google variable wins over the Anthropic one'
+    assert (google_cloud('arg', 'us-central1').project, google_cloud('arg', 'us-central1').location) == \
+        ('arg', 'us-central1')
 
 
 def test_auto_engine_detection(monkeypatch):
@@ -335,6 +354,23 @@ def test_auto_engine_detection(monkeypatch):
     monkeypatch.setenv('GLIMPSE_MODEL', 'ollama:x')
     assert detect_model() == 'ollama:x'
     assert resolve_engine('auto', model='gpt-5').model == 'gpt-5'
+
+
+def test_google_detection_needs_a_clear_signal(monkeypatch):
+    monkeypatch.setenv('GOOGLE_API_KEY', 'k')
+    monkeypatch.setenv('GOOGLE_CLOUD_PROJECT', 'p')
+    assert detect_model() is None, 'a key or project set for other Google APIs must not send pages to Gemini'
+    monkeypatch.setenv('GOOGLE_GENAI_USE_VERTEXAI', 'true')
+    assert detect_model() == 'vertex:gemini-flash-latest'
+    monkeypatch.setenv('GEMINI_API_KEY', 'k')
+    assert detect_model() == 'gemini:gemini-flash-latest'
+    monkeypatch.setenv('ANTHROPIC_API_KEY', 'k')
+    assert detect_model() == 'anthropic:claude-opus-5-5', 'the default provider does not change'
+
+
+def test_attach_options_reach_the_direct_engine():
+    engine = resolve_engine('auto', model='vertex:claude-opus-5-5', project='p', location='us-east5')
+    assert isinstance(engine, DirectEngine) and (engine.project, engine.location) == ('p', 'us-east5')
 
 
 async def test_direct_engine_without_a_model_says_what_to_do():
