@@ -21,7 +21,7 @@
 :root {
   --page: #f5f7fa; --card: #ffffff; --raised: #eceff4;
   --ink: #111827; --soft: #4b5565; --muted: #6b7487; --line: rgba(17, 24, 39, .09);
-  --accent: #2c49c7; --primary: #2c49c7; --on-primary: #ffffff;
+  --accent: #2c49c7; --primary: #2c49c7; --on-primary: #ffffff; --mark: #ffe27a; --mark-ink: #33290a;
   --code: #111827; --code-ink: #e6e9f0; --code-soft: #8b93a7; --code-key: #8ab4ff;
   --shadow: 0 1px 2px rgba(17, 24, 39, .05), 0 8px 24px rgba(17, 24, 39, .06);
   --sans: "Instrument Sans", "Helvetica Neue", "Segoe UI", sans-serif;
@@ -57,6 +57,7 @@ p { margin: 0; }
 .hero { padding-block: 64px 40px; display: grid; gap: 32px 48px; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: end; }
 h1, h2, h3 { font-weight: 500; text-wrap: balance; margin: 0; }
 h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); line-height: 1.04; letter-spacing: -.03em; }
+h1 mark { background: var(--mark); color: var(--mark-ink); padding: 0 .12em; border-radius: 4px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 h2 { font-size: clamp(1.75rem, 3.2vw, 2.5rem); line-height: 1.12; letter-spacing: -.02em; }
 h3 { font-size: 18px; line-height: 1.3; margin-bottom: 8px; }
 .lede { font-size: 19px; line-height: 1.55; color: var(--soft); max-width: 34em; }
@@ -95,6 +96,12 @@ ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap:
 .rail pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: inherit; }
 .rail b { color: var(--code-key); font-weight: 400; }
 figure { margin: 0; }
+section.row.media { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+.zoom { display: block; cursor: zoom-in; }
+.zoom:focus-visible { outline-offset: -2px; }
+dialog.viewer { padding: 0; border: 0; background: transparent; max-width: 96vw; max-height: 94vh; overflow: visible; }
+dialog.viewer::backdrop { background: rgba(7, 8, 13, .82); }
+dialog.viewer img { width: auto; max-width: 96vw; max-height: 94vh; border-radius: 12px; cursor: zoom-out; }
 .shot { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); background: var(--card); }
 
 .code { background: var(--code); color: var(--code-ink); border-radius: 12px; padding: 16px 20px; font-size: 13px; line-height: 1.6; overflow-x: auto; margin: 0; min-width: 0; }
@@ -119,13 +126,16 @@ td.when { font-weight: 500; min-width: 10em; }
 .examples a { font-weight: 500; }
 .examples span.d { display: block; font-size: 15px; color: var(--soft); }
 
+.engines { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 20px; margin: 0; max-width: 36em; }
+.engines dt { font-weight: 500; }
+.engines dd { margin: 0; color: var(--soft); }
 .state { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 48px; }
 footer { margin-top: 80px; border-top: 1px solid var(--line); padding-block: 24px 40px; font-size: 15px; color: var(--muted); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; }
 
 @media (max-width: 960px) {
   .hero, section.row, .demo-body, .state { grid-template-columns: minmax(0, 1fr); }
   .demo-shot { border-right: 0; border-bottom: 1px solid var(--line); }
-  .examples { grid-template-columns: minmax(0, 1fr); }
+  .examples, section.row.media { grid-template-columns: minmax(0, 1fr); }
   .hero { padding-block: 40px 32px; }
   section { padding-block: 64px 0; }
 }
@@ -137,6 +147,7 @@ footer { margin-top: 80px; border-top: 1px solid var(--line); padding-block: 24p
 <header class="top">
   <div class="brand">Glimpse <span>0.1</span></div>
   <nav aria-label="Main">
+    <a href="#engines">Models</a>
     <a href="#reads">What it reads</a>
     <a href="#examples">Examples</a>
     <a href="#status">Status</a>
@@ -145,7 +156,7 @@ footer { margin-top: 80px; border-top: 1px solid var(--line); padding-block: 24p
 </header>
 
 <div class="hero">
-  <h1>Your user filtered the table. Does your assistant know?</h1>
+  <h1>Your user filtered the table. Does <mark>your assistant</mark> know?</h1>
   <div>
     <p class="lede">Glimpse adds an AI assistant to your <a href="https://nicegui.io">NiceGUI</a> app in one line. It reads the page when the user asks, including their filters, sort order, tabs and chart zoom. You annotate nothing.</p>
     <div class="actions">
@@ -164,7 +175,7 @@ footer { margin-top: 80px; border-top: 1px solid var(--line); padding-block: 24p
     </div>
   </div>
   <div class="demo-body" data-panel="filtered">
-    <div class="demo-shot"><img src="images/dashboard-filtered.png" width="2160" height="1350" alt="A sales dashboard with its Orders grid filtered to APAC, sorted by amount, with SO-1185 first. The assistant panel beside it answers from those rows."></div>
+    <div class="demo-shot"><a class="zoom" href="images/dashboard-filtered.png"><img src="images/dashboard-filtered.png" width="2160" height="1350" alt="A sales dashboard with its Orders grid filtered to APAC, sorted by amount, with SO-1185 first. The assistant panel beside it answers from those rows."></a></div>
     <div class="answer">
       <div class="label">The assistant answers</div>
       <p>The highest amount in the grid is <strong>883&nbsp;k&nbsp;EUR</strong>, from order <strong>SO-1185</strong>. It’s a Jun order from APAC for the Delta product, placed by Hooli, with status open <span class="ref">[Orders]</span></p>
@@ -173,7 +184,7 @@ footer { margin-top: 80px; border-top: 1px solid var(--line); padding-block: 24p
     </div>
   </div>
   <div class="demo-body" data-panel="all" hidden>
-    <div class="demo-shot"><img src="images/dashboard-all-orders.png" width="2160" height="1350" loading="lazy" alt="The same dashboard with no filter on the Orders grid. The assistant panel beside it answers from all 240 orders."></div>
+    <div class="demo-shot"><a class="zoom" href="images/dashboard-all-orders.png"><img src="images/dashboard-all-orders.png" width="2160" height="1350" loading="lazy" alt="The same dashboard with no filter on the Orders grid. The assistant panel beside it answers from all 240 orders."></a></div>
     <div class="answer">
       <div class="label">The assistant answers</div>
       <p>The highest order amount is <strong>898&nbsp;k&nbsp;EUR</strong>, from order <strong>SO-1047</strong> <span class="ref">[Orders]</span>. No other order has this amount.</p>
@@ -182,7 +193,7 @@ footer { margin-top: 80px; border-top: 1px solid var(--line); padding-block: 24p
     </div>
   </div>
 </figure>
-<p class="note">Real screenshots and real answers from Claude Opus 5.5, on <a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/02_sales_dashboard.py">example 02</a>. The filter exists only in the browser, so the Python code never sees it. A chat function you wired up by hand would still answer 898.</p>
+<p class="note">Click a screenshot to see it full size. Real screenshots and real answers from Claude Opus 5.5, in the <a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/02_sales_dashboard.py">sales dashboard example</a>. The filter exists only in the browser, so the Python code never sees it. A chat function you wired up by hand would still answer 898.</p>
 
 <section class="row" id="start">
   <div class="prose">
@@ -202,6 +213,34 @@ footer { margin-top: 80px; border-top: 1px solid var(--line); padding-block: 24p
     <span class="hl">glimpse.attach()</span>
 
 ui.run()</pre>
+</section>
+
+<section class="row" id="engines">
+  <div class="prose">
+    <h2>Your model, and the engine that answers</h2>
+    <p>Claude and Gemini, with an API key or on Google Cloud Vertex AI, OpenAI and any OpenAI-compatible server. All calls run on your server, and provider SDKs are optional.</p>
+    <dl class="engines">
+      <dt>Direct</dt><dd>One model answers and reads more of the page through tools. The default</dd>
+      <dt>Council</dt><dd>A second model checks each answer against the page before the user sees it</dd>
+      <dt>ADK</dt><dd>Your Google ADK agent, as it is, with the page tools added</dd>
+      <dt>Your own</dt><dd>Any async generator. Capture, budgets and sanitizing still apply</dd>
+    </dl>
+  </div>
+<pre class="code"><span class="k"># With an API key</span>
+glimpse.attach(model='anthropic:claude-opus-5-5')
+
+<span class="k"># Or with your Google Cloud project</span>
+glimpse.attach(model='vertex:claude-opus-5-5',
+               project='my-project')
+
+<span class="k"># Pick the engine</span>
+glimpse.attach(<span class="hl">engine='council'</span>)
+glimpse.attach(<span class="hl">engine=my_adk_agent</span>)
+
+<span class="k">async def</span> my_engine(messages, page):
+    yield await my_agent.run(page.to_prompt())
+
+glimpse.attach(<span class="hl">engine=my_engine</span>)</pre>
 </section>
 
 <section id="reads" class="prose">
@@ -227,7 +266,7 @@ ui.run()</pre>
   <div class="prose">
     <h2>200,000 points in a 6,000-token budget</h2>
     <p>Raw data would not fit, so Glimpse sends statistics computed in Python and a visible truncation notice, and gives the model read-only tools to fetch more. Budgets also cover history, so long sessions don’t grow until they fail.</p>
-    <p>On <a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/03_large_data.py">example 03</a>, we asked for critical events on the north sensor. The model made two tool calls with combined filters and answered 969 events, highest reading 84.06, in about 3,710 of its 6,000 tokens. Both figures match a separate calculation over the 20,000 rows.</p>
+    <p>In the <a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/03_large_data.py">large data example</a>, we asked for critical events on the north sensor. The model made two tool calls with combined filters and answered 969 events, highest reading 84.06, in about 3,710 of its 6,000 tokens. Both figures match a separate calculation over the 20,000 rows.</p>
   </div>
 <figure class="rail">
 <figcaption>What the model received</figcaption>
@@ -240,7 +279,7 @@ ui.run()</pre>
 </figure>
 </section>
 
-<section class="row">
+<section class="row media">
   <div class="prose">
     <h2>Read-only doesn’t mean safe</h2>
     <p>Assistants have leaked data through a rendered image or link, with no write tools involved, so Glimpse treats model output as hostile. In this screenshot an engine acts like a compromised model, and the browser makes no request to the attacker.</p>
@@ -252,34 +291,18 @@ ui.run()</pre>
     </ul>
     <p>This limits prompt injection and doesn’t solve it. A hijacked model can still give a misleading answer, but it can’t make the browser send your data anywhere. <a href="https://github.com/axnsantana/glimpse-ai/blob/main/docs/security.md">Read the security notes</a></p>
   </div>
-  <figure class="shot"><img src="images/red-team.png" width="2160" height="1350" loading="lazy" alt="An employee record page. In the panel, a malicious image is replaced by the note 'image removed', a link is disabled, and raw HTML shows as plain text."></figure>
+  <figure class="shot"><a class="zoom" href="images/red-team.png"><img src="images/red-team.png" width="2160" height="1350" loading="lazy" alt="An employee record page. In the panel, a malicious image is replaced by the note 'image removed', a link is disabled, and raw HTML shows as plain text."></a></figure>
 </section>
 
-<section class="row">
+<section class="row media">
   <div class="prose">
     <h2>It shows its work</h2>
     <p>Under every answer, “What the assistant saw” opens exactly what was sent and how much of the budget it used. Context that silently never arrives is a common complaint about tools like this, and this is how you catch it.</p>
     <p>Sources sit under each answer. Click one and the page scrolls to that chart or table. The panel itself lives in a Shadow DOM, so it survives hostile CSS and leaves your styles alone.</p>
   </div>
-  <figure class="shot"><img src="images/inspector.png" width="2160" height="1350" loading="lazy" alt="The assistant panel with 'What the assistant saw' open, showing the token budget and the page state that was sent."></figure>
+  <figure class="shot"><a class="zoom" href="images/inspector.png"><img src="images/inspector.png" width="2160" height="1350" loading="lazy" alt="The assistant panel with 'What the assistant saw' open, showing the token budget and the page state that was sent."></a></figure>
 </section>
 
-<section class="row">
-  <div class="prose">
-    <h2>Your model, or your own agent</h2>
-    <p>Claude and Gemini, on their own APIs or on Google Cloud Vertex AI, OpenAI and any OpenAI-compatible server work with no agent framework. All calls run on your server, and provider SDKs are optional.</p>
-    <p>The council engine has a second model check each answer against the page before the user sees it. To use your own agent, pass a Google ADK agent as it is, or write an async generator. Capture, budgets and sanitizing still apply.</p>
-  </div>
-<pre class="code"><span class="k"># Pick a model</span>
-glimpse.attach(model='anthropic:claude-opus-5-5')
-glimpse.attach(model='vertex:claude-opus-5-5',
-               project='my-project')
-glimpse.attach(model='ollama:llama3.2')
-
-<span class="k"># Check answers, or bring your agent</span>
-glimpse.attach(engine='council')
-glimpse.attach(engine=my_adk_agent)</pre>
-</section>
 
 <section id="examples" class="prose">
   <h2>Small apps to try</h2>
@@ -333,8 +356,23 @@ glimpse.attach(engine=my_adk_agent)</pre>
 </footer>
 
 </div>
+<dialog class="viewer" id="viewer" aria-label="Screenshot, full size"><img alt=""></dialog>
 <script>
 (function () {
+  var viewer = document.getElementById('viewer');
+  var full = viewer.querySelector('img');
+  if (viewer.showModal) {
+    document.querySelectorAll('a.zoom').forEach(function (link) {
+      link.addEventListener('click', function (event) {
+        event.preventDefault();
+        var shot = link.querySelector('img');
+        full.src = link.getAttribute('href');
+        full.alt = shot.alt;
+        viewer.showModal();
+      });
+    });
+    viewer.addEventListener('click', function () { viewer.close(); });
+  }
   var buttons = document.querySelectorAll('.switch button');
   var panels = document.querySelectorAll('[data-panel]');
   buttons.forEach(function (button) {
