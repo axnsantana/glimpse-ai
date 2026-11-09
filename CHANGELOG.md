@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.1.0 (2026-11-09)
 
 The first MVP: NiceGUI only, read-only, with direct, council, ADK, offline and custom engines. See `docs/requirements-status.md`.
 
@@ -10,4 +10,4 @@ The first MVP: NiceGUI only, read-only, with direct, council, ADK, offline and c
 - **Releases.** Publishing a GitHub release publishes to PyPI through trusted publishing. See `docs/releasing.md`.
 - The sdist now includes only an explicit list of folders.
 
-The PyPI package is `glimpse-ai`, because the name `glimpse` is taken. It is imported as `glimpse`. This version is not on PyPI yet.
+The PyPI package is `glimpse-ai`, because the name `glimpse` is taken. It is imported as `glimpse`. The earlier `0.0.1` on PyPI was an empty placeholder that reserved the name.
