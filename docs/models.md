@@ -26,7 +26,7 @@ glimpse.attach(engine=glimpse.DirectEngine('openai:my-model', base_url='http://l
 Vertex AI calls use a Google Cloud project and a location, and your Google credentials instead of an API key. Set them up once:
 
 ```bash
-pip install -e ".[vertex]"
+pip install "glimpse-ai[vertex]"
 gcloud auth application-default login       # or set GOOGLE_APPLICATION_CREDENTIALS to a service account key
 ```
 
