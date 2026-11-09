@@ -11,39 +11,35 @@
 <meta property="og:url" content="https://axnsantana.github.io/glimpse-ai/">
 <meta property="og:image" content="https://axnsantana.github.io/glimpse-ai/images/dashboard-filtered.png">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232c49c7'/%3E%3Cpath d='M5 16s4-7 11-7 11 7 11 7-4 7-11 7S5 16 5 16Z' fill='none' stroke='%23fff' stroke-width='2.4'/%3E%3Ccircle cx='16' cy='16' r='3.4' fill='%23ffe27a'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232c49c7'/%3E%3Cpath d='M5 16s4-7 11-7 11 7 11 7-4 7-11 7S5 16 5 16Z' fill='none' stroke='%23fff' stroke-width='2.4'/%3E%3Ccircle cx='16' cy='16' r='3.4' fill='%23fff'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: the page borrows the product's own shape. Each section is the page on the left and,
-   in a rail on the right, the real text the assistant received for it. */
+/* Ink on paper: one tinted neutral ramp, one cobalt accent, Instrument Sans with JetBrains Mono for
+   what the model reads. The demo is the one rich moment. Bracketed element IDs are the signature. */
 :root {
-  --ground: #eef1f6; --paper: #ffffff; --ink: #141b2b; --soft: #515c76; --line: #d3d9e5;
-  --accent: #2c49c7; --accent-ink: #ffffff; --chip: #e4e9fb; --mark: #ffe27a; --mark-ink: #33290a;
-  --code: #182033; --code-ink: #e6ebf7; --code-soft: #9eabc6; --code-key: #ffe27a;
-  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
-  --body: "Instrument Sans", "Helvetica Neue", "Segoe UI", sans-serif;
+  --page: #f5f7fa; --card: #ffffff; --raised: #eceff4;
+  --ink: #111827; --soft: #4b5565; --muted: #6b7487; --line: rgba(17, 24, 39, .09);
+  --accent: #2c49c7; --primary: #2c49c7; --on-primary: #ffffff; --mark: #ffe27a; --mark-ink: #33290a;
+  --code: #111827; --code-ink: #e6e9f0; --code-soft: #8b93a7; --code-key: #8ab4ff;
+  --shadow: 0 1px 2px rgba(17, 24, 39, .05), 0 8px 24px rgba(17, 24, 39, .06);
+  --sans: "Instrument Sans", "Helvetica Neue", "Segoe UI", sans-serif;
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --shadow: 0 1px 2px rgba(20, 27, 43, .08), 0 14px 36px rgba(20, 27, 43, .11);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --ground: #10141f; --paper: #181e2c; --ink: #e8ecf5; --soft: #a0abc2; --line: #2d3549;
-    --accent: #9db0ff; --accent-ink: #10141f; --chip: #252e49; --mark: #ffe27a; --mark-ink: #33290a;
-    --code: #0b0f18; --code-ink: #e6ebf7; --code-soft: #8f9cb8; --code-key: #ffe27a;
-    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 14px 36px rgba(0, 0, 0, .4); color-scheme: dark;
+  :root {
+    --page: #0b0d14; --card: #11141c; --raised: #1a1e28;
+    --ink: #eef0f5; --soft: #a3a9b8; --muted: #7a8296; --line: rgba(238, 240, 245, .08);
+    --accent: #8ab4ff; --primary: #eef0f5; --on-primary: #0b0d14;
+    --code: #07080d; --code-ink: #e6e9f0; --code-soft: #7a8296; --code-key: #8ab4ff;
+    --shadow: none; color-scheme: dark;
   }
-}
-:root[data-theme="dark"] {
-  --ground: #10141f; --paper: #181e2c; --ink: #e8ecf5; --soft: #a0abc2; --line: #2d3549;
-  --accent: #9db0ff; --accent-ink: #10141f; --chip: #252e49; --mark: #ffe27a; --mark-ink: #33290a;
-  --code: #0b0f18; --code-ink: #e6ebf7; --code-soft: #8f9cb8; --code-key: #ffe27a;
-  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 14px 36px rgba(0, 0, 0, .4); color-scheme: dark;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body { margin: 0; background: var(--ground); color: var(--ink); font: 400 17px/1.6 var(--body); -webkit-font-smoothing: antialiased; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 400 17px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
 img { display: block; max-width: 100%; height: auto; }
 a { color: var(--accent); text-underline-offset: .18em; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -52,83 +48,96 @@ p { margin: 0; }
 .wrap { max-width: 1200px; margin-inline: auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
 
 .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; padding-block: 20px; }
-.brand { display: flex; align-items: baseline; gap: 10px; font: 700 22px/1 var(--display); }
-.pill { font: 500 12px/1 var(--mono); padding: 4px 7px; border: 1px solid var(--line); border-radius: 5px; color: var(--soft); }
-.top nav { display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 15px; font-weight: 500; }
-.top nav a { color: var(--ink); text-decoration: none; }
-.top nav a:hover { color: var(--accent); }
+.brand { display: flex; align-items: baseline; gap: 8px; font: 600 20px/1 var(--sans); }
+.brand span { font: 400 12px/1 var(--mono); color: var(--muted); }
+.top nav { display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 15px; }
+.top nav a { color: var(--soft); text-decoration: none; transition: color 150ms var(--ease); }
+.top nav a:hover { color: var(--ink); }
 
-.hero { padding-block: 40px 36px; display: grid; gap: 28px; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: end; }
-h1, h2 { font-family: var(--display); font-weight: 700; text-wrap: balance; margin: 0; }
-h1 { font-size: clamp(2.5rem, 6.4vw, 4.6rem); line-height: 1.02; letter-spacing: -.025em; }
+.hero { padding-block: 64px 40px; display: grid; gap: 32px 48px; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: end; }
+h1, h2, h3 { font-weight: 500; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); line-height: 1.04; letter-spacing: -.03em; }
 h1 mark { background: var(--mark); color: var(--mark-ink); padding: 0 .12em; border-radius: 4px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
-.lede { font-size: 1.15rem; max-width: 34em; }
-.lede + .actions { margin-top: 20px; }
-.actions { display: flex; flex-wrap: wrap; gap: 10px; }
-.button { display: inline-block; padding: 10px 16px; border-radius: 7px; font-weight: 600; font-size: 15px; text-decoration: none; border: 1px solid var(--line); color: var(--ink); background: var(--paper); }
-.button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.button:hover { filter: brightness(1.06); }
+h2 { font-size: clamp(1.75rem, 3.2vw, 2.5rem); line-height: 1.12; letter-spacing: -.02em; }
+h3 { font-size: 18px; line-height: 1.3; margin-bottom: 8px; }
+.lede { font-size: 19px; line-height: 1.55; color: var(--soft); max-width: 34em; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.button { display: inline-flex; align-items: center; height: 44px; padding: 0 20px; border-radius: 8px; font-weight: 500; font-size: 15px; text-decoration: none; border: 1px solid var(--line); color: var(--ink); background: var(--card); transition: background-color 150ms var(--ease), transform 150ms var(--ease); }
+.button:hover { background: var(--raised); }
+.button:active { transform: scale(.98); }
+.button.primary { background: var(--primary); border-color: transparent; color: var(--on-primary); }
+.button.primary:hover { background: var(--primary); opacity: .9; }
 
-.demo { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
-.demo-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
-.demo-q { font-weight: 600; min-width: 0; }
-.switch { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 3px; background: var(--ground); border-radius: 8px; }
-.switch button { font: 500 14px/1.2 var(--body); color: var(--soft); background: none; border: 0; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
-.switch button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.demo { background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
+.demo-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.demo-q { font-weight: 500; min-width: 0; }
+.switch { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: var(--raised); border-radius: 10px; }
+.switch button { font: 500 14px/1.2 var(--sans); color: var(--soft); background: none; border: 0; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: background-color 150ms var(--ease), color 150ms var(--ease); }
+.switch button:hover { color: var(--ink); }
+.switch button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(17, 24, 39, .08); }
 .demo-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); }
-.demo-shot { border-right: 1px solid var(--line); min-width: 0; background: var(--ground); }
-.answer { padding: 18px 20px; min-width: 0; display: flex; flex-direction: column; gap: 12px; font-size: 16px; }
-.answer mark { background: var(--mark); color: var(--mark-ink); padding: 0 .2em; border-radius: 3px; font-weight: 600; }
-.ref { font: 500 12px/1 var(--body); padding: 2px 6px; border-radius: 4px; background: var(--chip); color: var(--accent); white-space: nowrap; }
-.label { font: 500 12px/1.3 var(--mono); letter-spacing: .04em; color: var(--soft); }
+.demo-shot { border-right: 1px solid var(--line); min-width: 0; background: var(--raised); }
+.answer { padding: 20px; min-width: 0; display: flex; flex-direction: column; gap: 12px; font-size: 16px; }
+.answer .label { font-size: 13px; color: var(--muted); }
+.answer strong { font-weight: 600; font-variant-numeric: tabular-nums; }
+.ref { font: 400 12px/1 var(--mono); color: var(--muted); white-space: nowrap; }
 .agree { font-size: 14px; color: var(--soft); border-top: 1px solid var(--line); padding-top: 12px; }
-.note { padding-block: 12px 0; font-size: 14px; color: var(--soft); max-width: 62em; }
+.note { padding-top: 12px; font-size: 14px; color: var(--muted); max-width: 62em; }
 
-section { padding-block: 56px 0; }
-section.row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: 28px 44px; align-items: start; }
-.prose { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+section { padding-block: 80px 0; }
+section.row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: 32px 48px; align-items: start; }
+.prose { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .prose > p, .prose > ul { max-width: 36em; }
-h2 { font-size: clamp(1.7rem, 3.4vw, 2.5rem); line-height: 1.1; letter-spacing: -.015em; }
-ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 6px; }
+.small { font-size: 15px; color: var(--soft); }
+ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 8px; }
 
-.rail { min-width: 0; background: var(--code); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; font-size: 12.5px; line-height: 1.55; overflow-x: auto; }
-.rail figcaption, .rail .caption { display: block; color: var(--code-soft); font: 500 12px/1.3 var(--mono); padding-bottom: 8px; }
+.rail { min-width: 0; background: var(--code); color: var(--code-ink); border-radius: 12px; padding: 16px; font-size: 13px; line-height: 1.6; overflow-x: auto; }
+.rail figcaption { display: block; color: var(--code-soft); font: 400 12px/1.3 var(--mono); padding-bottom: 8px; }
 .rail pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: inherit; }
-.rail b { color: var(--code-key); font-weight: 500; }
+.rail b { color: var(--code-key); font-weight: 400; }
 figure { margin: 0; }
-.shot { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; box-shadow: var(--shadow); background: var(--paper); }
+section.row.media { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+.zoom { display: block; cursor: zoom-in; }
+.zoom:focus-visible { outline-offset: -2px; }
+dialog.viewer { padding: 0; border: 0; background: transparent; max-width: 96vw; max-height: 94vh; overflow: visible; }
+dialog.viewer::backdrop { background: rgba(7, 8, 13, .82); }
+dialog.viewer img { width: auto; max-width: 96vw; max-height: 94vh; border-radius: 12px; cursor: zoom-out; }
+.shot { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); background: var(--card); }
 
-.code { background: var(--code); color: var(--code-ink); border-radius: 10px; padding: 16px 18px; font-size: 13px; line-height: 1.6; overflow-x: auto; margin: 0; min-width: 0; }
+.code { background: var(--code); color: var(--code-ink); border-radius: 12px; padding: 16px 20px; font-size: 13px; line-height: 1.6; overflow-x: auto; margin: 0; min-width: 0; }
 .code .k { color: var(--code-soft); }
 .code .hl { color: var(--code-key); }
-.install { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--code); color: var(--code-ink); border-radius: 8px; padding: 8px 8px 8px 16px; font: 400 14.5px/1.4 var(--mono); }
+.install { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--code); color: var(--code-ink); border-radius: 10px; padding: 8px 8px 8px 16px; font: 400 15px/1.4 var(--mono); }
 .install code { overflow-x: auto; white-space: nowrap; min-width: 0; }
-.install button { flex: none; font: 500 13px/1 var(--body); padding: 8px 10px; border-radius: 6px; border: 0; cursor: pointer; background: var(--code-ink); color: var(--code); }
+.install button { flex: none; font: 500 13px/1 var(--sans); height: 32px; padding: 0 12px; border-radius: 6px; border: 0; cursor: pointer; background: var(--code-ink); color: var(--code); transition: opacity 150ms var(--ease); }
+.install button:hover { opacity: .85; }
 
-.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
 table { border-collapse: collapse; width: 100%; font-size: 15px; }
-th, td { text-align: left; vertical-align: top; padding: 11px 14px; border-bottom: 1px solid var(--line); }
+th, td { text-align: left; vertical-align: top; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 tr:last-child td { border-bottom: 0; }
-th { font: 500 12px/1.3 var(--mono); letter-spacing: .04em; color: var(--soft); }
-td code { font-size: 12.5px; overflow-wrap: anywhere; }
+th { font-size: 13px; font-weight: 400; color: var(--muted); }
+td code { font-size: 13px; overflow-wrap: anywhere; }
 td.when { font-weight: 500; min-width: 10em; }
 
 .examples { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 32px; }
-.examples li { padding: 10px 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: 2.4em minmax(0, 1fr); }
-.examples .n { font: 500 13px/1.7 var(--mono); color: var(--soft); }
-.examples a { font-weight: 600; }
+.examples li { padding: 12px 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: 40px minmax(0, 1fr); }
+.examples .n { font: 400 13px/1.8 var(--mono); color: var(--muted); }
+.examples a { font-weight: 500; }
 .examples span.d { display: block; font-size: 15px; color: var(--soft); }
 
-.state { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 44px; }
-.state h3 { margin: 0 0 8px; font: 700 1.1rem/1.2 var(--display); }
-footer { margin-top: 64px; border-top: 1px solid var(--line); padding-block: 24px 36px; font-size: 14.5px; color: var(--soft); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; }
+.engines { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 20px; margin: 0; max-width: 36em; }
+.engines dt { font-weight: 500; }
+.engines dd { margin: 0; color: var(--soft); }
+.state { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 48px; }
+footer { margin-top: 80px; border-top: 1px solid var(--line); padding-block: 24px 40px; font-size: 15px; color: var(--muted); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; }
 
 @media (max-width: 960px) {
   .hero, section.row, .demo-body, .state { grid-template-columns: minmax(0, 1fr); }
   .demo-shot { border-right: 0; border-bottom: 1px solid var(--line); }
-  .examples { grid-template-columns: minmax(0, 1fr); }
-  .hero { padding-block: 20px 28px; }
-  section { padding-block: 44px 0; }
+  .examples, section.row.media { grid-template-columns: minmax(0, 1fr); }
+  .hero { padding-block: 40px 32px; }
+  section { padding-block: 64px 0; }
 }
 </style>
 </head>
@@ -136,8 +145,9 @@ footer { margin-top: 64px; border-top: 1px solid var(--line); padding-block: 24p
 <div class="wrap">
 
 <header class="top">
-  <div class="brand">Glimpse <span class="pill">alpha</span></div>
+  <div class="brand">Glimpse <span>0.1</span></div>
   <nav aria-label="Main">
+    <a href="#engines">Models</a>
     <a href="#reads">What it reads</a>
     <a href="#examples">Examples</a>
     <a href="#status">Status</a>
@@ -165,25 +175,25 @@ footer { margin-top: 64px; border-top: 1px solid var(--line); padding-block: 24p
     </div>
   </div>
   <div class="demo-body" data-panel="filtered">
-    <div class="demo-shot"><img src="images/dashboard-filtered.png" width="2160" height="1350" alt="A sales dashboard with its Orders grid filtered to APAC, sorted by amount, with SO-1185 first. The assistant panel beside it answers from those rows."></div>
+    <div class="demo-shot"><a class="zoom" href="images/dashboard-filtered.png"><img src="images/dashboard-filtered.png" width="2160" height="1350" alt="A sales dashboard with its Orders grid filtered to APAC, sorted by amount, with SO-1185 first. The assistant panel beside it answers from those rows."></a></div>
     <div class="answer">
       <div class="label">The assistant answers</div>
-      <p>The highest amount in the grid is <mark>883 k EUR</mark>, from order <mark>SO-1185</mark>. It’s a Jun order from APAC for the Delta product, placed by Hooli, with status open <span class="ref">Orders</span>.</p>
-      <p>This only covers the current filters, Region = APAC and Status = open. That leaves 21 of the 240 orders, sorted by Amount from high to low <span class="ref">Orders</span>.</p>
+      <p>The highest amount in the grid is <strong>883&nbsp;k&nbsp;EUR</strong>, from order <strong>SO-1185</strong>. It’s a Jun order from APAC for the Delta product, placed by Hooli, with status open <span class="ref">[Orders]</span></p>
+      <p>This only covers the current filters, Region = APAC and Status = open. That leaves 21 of the 240 orders, sorted by Amount from high to low <span class="ref">[Orders]</span></p>
       <p class="agree">The grid in the browser agrees: 21 rows, with SO-1185 on top at 883.</p>
     </div>
   </div>
   <div class="demo-body" data-panel="all" hidden>
-    <div class="demo-shot"><img src="images/dashboard-all-orders.png" width="2160" height="1350" loading="lazy" alt="The same dashboard with no filter on the Orders grid. The assistant panel beside it answers from all 240 orders."></div>
+    <div class="demo-shot"><a class="zoom" href="images/dashboard-all-orders.png"><img src="images/dashboard-all-orders.png" width="2160" height="1350" loading="lazy" alt="The same dashboard with no filter on the Orders grid. The assistant panel beside it answers from all 240 orders."></a></div>
     <div class="answer">
       <div class="label">The assistant answers</div>
-      <p>The highest order amount is <mark>898 k EUR</mark>, from order <mark>SO-1047</mark> <span class="ref">Orders</span>. No other order has this amount.</p>
-      <p>All 240 orders were checked, not just the 50 rows shown first <span class="ref">Orders</span>.</p>
+      <p>The highest order amount is <strong>898&nbsp;k&nbsp;EUR</strong>, from order <strong>SO-1047</strong> <span class="ref">[Orders]</span>. No other order has this amount.</p>
+      <p>All 240 orders were checked, not just the 50 rows shown first <span class="ref">[Orders]</span></p>
       <p class="agree">Now switch to the filtered grid. The question stays the same, and SO-1047 drops out because it has shipped.</p>
     </div>
   </div>
 </figure>
-<p class="note">Real screenshots and real answers from Claude Opus 5.5, on <a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/02_sales_dashboard.py">example 02</a>. The filter exists only in the browser, so the Python code never sees it. A chat function you wired up by hand would still answer 898.</p>
+<p class="note">Click a screenshot to see it full size. Real screenshots and real answers from Claude Opus 5.5, in the <a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/02_sales_dashboard.py">sales dashboard example</a>. The filter exists only in the browser, so the Python code never sees it. A chat function you wired up by hand would still answer 898.</p>
 
 <section class="row" id="start">
   <div class="prose">
@@ -191,7 +201,7 @@ footer { margin-top: 64px; border-top: 1px solid var(--line); padding-block: 24p
     <p>Add <code>glimpse.attach()</code> to a page, or call it once at module level to cover the whole app, including <code>ui.sub_pages</code>. Users get a side panel that makes room for itself next to your layout.</p>
     <p>No key yet? The panel runs in a labelled offline demo that answers from simple rules, so you can see what it reads before you connect a model.</p>
     <div class="install"><code id="install">pip install "glimpse-ai[anthropic]"</code><button type="button" id="copy">Copy</button></div>
-    <p style="font-size:15px;color:var(--soft)">Needs Python 3.10 or later and NiceGUI 3.19 or later.</p>
+    <p class="small">Needs Python 3.10 or later and NiceGUI 3.19 or later.</p>
   </div>
 <pre class="code"><span class="k">from</span> nicegui <span class="k">import</span> ui
 <span class="k">import</span> glimpse
@@ -203,6 +213,34 @@ footer { margin-top: 64px; border-top: 1px solid var(--line); padding-block: 24p
     <span class="hl">glimpse.attach()</span>
 
 ui.run()</pre>
+</section>
+
+<section class="row" id="engines">
+  <div class="prose">
+    <h2>Your model, and the engine that answers</h2>
+    <p>Claude and Gemini, with an API key or on Google Cloud Vertex AI, OpenAI and any OpenAI-compatible server. All calls run on your server, and provider SDKs are optional.</p>
+    <dl class="engines">
+      <dt>Direct</dt><dd>One model answers and reads more of the page through tools. The default</dd>
+      <dt>Council</dt><dd>A second model checks each answer against the page before the user sees it</dd>
+      <dt>ADK</dt><dd>Your Google ADK agent, as it is, with the page tools added</dd>
+      <dt>Your own</dt><dd>Any async generator. Capture, budgets and sanitizing still apply</dd>
+    </dl>
+  </div>
+<pre class="code"><span class="k"># With an API key</span>
+glimpse.attach(model='anthropic:claude-opus-5-5')
+
+<span class="k"># Or with your Google Cloud project</span>
+glimpse.attach(model='vertex:claude-opus-5-5',
+               project='my-project')
+
+<span class="k"># Pick the engine</span>
+glimpse.attach(<span class="hl">engine='council'</span>)
+glimpse.attach(<span class="hl">engine=my_adk_agent</span>)
+
+<span class="k">async def</span> my_engine(messages, page):
+    yield await my_agent.run(page.to_prompt())
+
+glimpse.attach(<span class="hl">engine=my_engine</span>)</pre>
 </section>
 
 <section id="reads" class="prose">
@@ -227,9 +265,8 @@ ui.run()</pre>
 <section class="row">
   <div class="prose">
     <h2>200,000 points in a 6,000-token budget</h2>
-    <p>Sending raw data would cost a fortune and then fail. Glimpse sends statistics computed in Python and a visible truncation notice, and gives the model read-only tools to fetch more.</p>
-    <p>On <a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/03_large_data.py">example 03</a>, we asked for critical events on the north sensor. The model made two tool calls with combined filters and answered <strong>969 events, highest reading 84.06</strong>. Both match a separate calculation over the 20,000 rows.</p>
-    <p>That request used about 3,710 of its 6,000 budget tokens. Budgets also cover history, so long sessions don’t grow until they fail.</p>
+    <p>Raw data would not fit, so Glimpse sends statistics computed in Python and a visible truncation notice, and gives the model read-only tools to fetch more. Budgets also cover history, so long sessions don’t grow until they fail.</p>
+    <p>In the <a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/03_large_data.py">large data example</a>, we asked for critical events on the north sensor. The model made two tool calls with combined filters and answered 969 events, highest reading 84.06, in about 3,710 of its 6,000 tokens. Both figures match a separate calculation over the 20,000 rows.</p>
   </div>
 <figure class="rail">
 <figcaption>What the model received</figcaption>
@@ -242,58 +279,33 @@ ui.run()</pre>
 </figure>
 </section>
 
-<section class="row">
+<section class="row media">
   <div class="prose">
     <h2>Read-only doesn’t mean safe</h2>
-    <p>Assistants have leaked data through a rendered image or link, with no write tools involved. So Glimpse treats model output as hostile. This screenshot shows an engine acting like a compromised model. The browser made no request to the attacker.</p>
+    <p>Assistants have leaked data through a rendered image or link, with no write tools involved, so Glimpse treats model output as hostile. In this screenshot an engine acts like a compromised model, and the browser makes no request to the attacker.</p>
     <ul>
-      <li>Images in answers are never rendered, and external links aren’t clickable unless you allow the host.</li>
-      <li>Answers are sanitized on the server for every streamed chunk, and the panel never parses them as HTML.</li>
-      <li>Passwords and fields like API keys are withheld by default. Exclude more columns or elements, or add a redaction hook.</li>
-      <li>Hidden text isn’t read, and page content is fenced as data, outside the system prompt.</li>
-      <li>Each user’s snapshot and conversation stay on their own connection.</li>
+      <li>Images in answers are never rendered, and external links aren’t clickable unless you allow the host</li>
+      <li>Answers are sanitized on the server for every streamed chunk, and never parsed as HTML</li>
+      <li>Passwords and fields like API keys are withheld by default, and you can exclude more or add a redaction hook</li>
+      <li>Page content is fenced as data, outside the system prompt, and each user’s conversation stays on their own connection</li>
     </ul>
-    <p>This limits prompt injection and doesn’t solve it. A hijacked model can still give a misleading answer, but it can’t make the browser send your data anywhere. <a href="https://github.com/axnsantana/glimpse-ai/blob/main/docs/security.md">Read the security notes</a>.</p>
+    <p>This limits prompt injection and doesn’t solve it. A hijacked model can still give a misleading answer, but it can’t make the browser send your data anywhere. <a href="https://github.com/axnsantana/glimpse-ai/blob/main/docs/security.md">Read the security notes</a></p>
   </div>
-  <figure class="shot"><img src="images/red-team.png" width="2160" height="1350" loading="lazy" alt="An employee record page. In the panel, a malicious image is replaced by the note 'image removed', a link is disabled, and raw HTML shows as plain text."></figure>
+  <figure class="shot"><a class="zoom" href="images/red-team.png"><img src="images/red-team.png" width="2160" height="1350" loading="lazy" alt="An employee record page. In the panel, a malicious image is replaced by the note 'image removed', a link is disabled, and raw HTML shows as plain text."></a></figure>
 </section>
 
-<section class="row">
+<section class="row media">
   <div class="prose">
     <h2>It shows its work</h2>
-    <p>Under every answer, “What the assistant saw” opens exactly what was sent and how much of the budget it used. Developers of similar tools report context that silently never arrives, and this is how you catch it.</p>
-    <p>Sources sit under each answer. Click one and the page scrolls to that chart or table.</p>
-    <p>The panel sits in a Shadow DOM, so it survives hostile CSS and leaves your styles alone. The right drawer below belongs to the host app, in a page that forces its own font on everything.</p>
+    <p>Under every answer, “What the assistant saw” opens exactly what was sent and how much of the budget it used. Context that silently never arrives is a common complaint about tools like this, and this is how you catch it.</p>
+    <p>Sources sit under each answer. Click one and the page scrolls to that chart or table. The panel itself lives in a Shadow DOM, so it survives hostile CSS and leaves your styles alone.</p>
   </div>
-  <div class="prose">
-    <figure class="shot"><img src="images/inspector.png" width="2160" height="1350" loading="lazy" alt="The assistant panel with 'What the assistant saw' open, showing the token budget and the page state that was sent."></figure>
-    <figure class="shot"><img src="images/existing-layout.png" width="2160" height="1350" loading="lazy" alt="A host app with its own header, drawers and Comic Sans styling. The panel sits beside the right drawer in its own clean styles."></figure>
-  </div>
+  <figure class="shot"><a class="zoom" href="images/inspector.png"><img src="images/inspector.png" width="2160" height="1350" loading="lazy" alt="The assistant panel with 'What the assistant saw' open, showing the token budget and the page state that was sent."></a></figure>
 </section>
 
-<section class="row">
-  <div class="prose">
-    <h2>Your model, or your own agent</h2>
-    <p>Claude and Gemini, on their own APIs or on Google Cloud Vertex AI, OpenAI and any OpenAI-compatible server work with no agent framework, and all calls run on your server. NiceGUI is the only required dependency, and provider SDKs are optional.</p>
-    <p>A council engine can have a second model check each answer against the page before the user sees it. To use your own agent, pass a Google ADK agent as it is, or write an async generator. Capture, budgets and sanitizing still apply, and you can use the same read-only tools.</p>
-  </div>
-<pre class="code"><span class="k"># Pick a model</span>
-glimpse.attach(model='anthropic:claude-opus-5-5')
-glimpse.attach(model='vertex:claude-opus-5-5', project='my-project')
-glimpse.attach(model='ollama:llama3.2')
-glimpse.attach(engine='council', model='vertex:gemini-flash-latest')
-
-<span class="k"># Or bring your own agent</span>
-glimpse.attach(engine=my_adk_agent)
-
-<span class="k">async def</span> my_engine(messages, page):
-    yield await my_agent.run(page.to_prompt())
-
-glimpse.attach(engine=my_engine)</pre>
-</section>
 
 <section id="examples" class="prose">
-  <h2>Ten small apps to try</h2>
+  <h2>Small apps to try</h2>
   <p>The examples are how Glimpse is specified: the test suite runs each one exactly as it ships.</p>
   <ol class="examples">
     <li><span class="n">01</span><div><a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/01_quickstart.py">Quickstart</a><span class="d">One line, and answers that follow the screen</span></div></li>
@@ -320,7 +332,7 @@ glimpse.attach(engine=my_engine)</pre>
         <li>Over 200 tests on Python 3.10, 3.12 and 3.14, plus 15 in a real browser, in CI</li>
         <li>Grid filters, chart zoom, Shadow DOM isolation and blocked exfiltration, in a real browser</li>
         <li>Real requests against Claude’s token counter, all within budget</li>
-        <li>Claude Opus 5.5 got 26 of 26 reference questions right. That was one run on one dashboard with a simple scorer, so read it as an early sign and not a benchmark</li>
+        <li>Claude Opus 5.5 got 26 of 26 reference questions right, in one run on one dashboard with a simple scorer, so read it as an early sign and not a benchmark</li>
       </ul>
     </div>
     <div>
@@ -339,13 +351,28 @@ glimpse.attach(engine=my_engine)</pre>
 </section>
 
 <footer>
-  <div>Glimpse is open source under the MIT license.</div>
+  <div>Glimpse is open source under the MIT license</div>
   <div><a href="https://github.com/axnsantana/glimpse-ai">GitHub</a> · <a href="https://pypi.org/project/glimpse-ai/">PyPI</a></div>
 </footer>
 
 </div>
+<dialog class="viewer" id="viewer" aria-label="Screenshot, full size"><img alt=""></dialog>
 <script>
 (function () {
+  var viewer = document.getElementById('viewer');
+  var full = viewer.querySelector('img');
+  if (viewer.showModal) {
+    document.querySelectorAll('a.zoom').forEach(function (link) {
+      link.addEventListener('click', function (event) {
+        event.preventDefault();
+        var shot = link.querySelector('img');
+        full.src = link.getAttribute('href');
+        full.alt = shot.alt;
+        viewer.showModal();
+      });
+    });
+    viewer.addEventListener('click', function () { viewer.close(); });
+  }
   var buttons = document.querySelectorAll('.switch button');
   var panels = document.querySelectorAll('[data-panel]');
   buttons.forEach(function (button) {
@@ -360,7 +387,7 @@ glimpse.attach(engine=my_engine)</pre>
     var text = document.getElementById('install').textContent;
     var done = function () { copy.textContent = 'Copied'; setTimeout(function () { copy.textContent = 'Copy'; }, 1500); };
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(done).catch(function () { selectInstall(); });
+      navigator.clipboard.writeText(text).then(done).catch(selectInstall);
     } else { selectInstall(); }
   });
   function selectInstall() {
