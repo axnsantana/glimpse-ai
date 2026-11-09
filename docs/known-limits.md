@@ -1,6 +1,6 @@
 # Known limits
 
-This is version 0.1, and these are the limits we know of.
+This is version 0.2, and these are the limits we know of.
 
 ## How far it has been tested
 

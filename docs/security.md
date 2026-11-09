@@ -43,7 +43,7 @@ The same applies to `system_prompt=`.
 
 ## Minimum NiceGUI version
 
-The minimum is **3.19.0**, set against all 24 advisories published in the NiceGUI repository as of 2026-11-02. It is the first release with a fix for all of them. Do not go lower: one of the three fixed in 3.19.0, [GHSA-m47w-xwfc-82pf](https://github.com/zauberzeug/nicegui/security/advisories/GHSA-m47w-xwfc-82pf), is an XSS through `:`-prefixed keys in `ui.aggrid` and `ui.echart` data, such as DataFrame column names. Re-check the list before each Glimpse release, because this list grows quickly:
+The minimum is **3.19.0**, set against all 24 advisories published in the NiceGUI repository as of 2026-11-10. It is the first release with a fix for all of them. Do not go lower: one of the three fixed in 3.19.0, [GHSA-m47w-xwfc-82pf](https://github.com/zauberzeug/nicegui/security/advisories/GHSA-m47w-xwfc-82pf), is an XSS through `:`-prefixed keys in `ui.aggrid` and `ui.echart` data, such as DataFrame column names. Re-check the list before each Glimpse release, because this list grows quickly:
 
 ```bash
 gh api '/repos/zauberzeug/nicegui/security-advisories?per_page=100' --jq '.[] | [.ghsa_id, .severity, .vulnerabilities[0].patched_versions] | @tsv'
