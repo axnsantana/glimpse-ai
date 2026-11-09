@@ -7,7 +7,7 @@ Glimpse adds an assistant in a side panel to a NiceGUI app. It answers questions
 Glimpse is not on PyPI yet, so install it from a clone of the repository:
 
 ```bash
-pip install -e ".[anthropic]"    # or .[openai] for OpenAI and local models
+pip install -e ".[anthropic]"    # .[vertex] for Vertex AI, .[gemini], .[openai] for OpenAI and local models, .[adk]
 ```
 
 Once it is released, this will be `pip install "glimpse-ai[anthropic]"`.
@@ -40,6 +40,14 @@ glimpse.attach(skip_paths=['/login'])
 ## Connect a model
 
 Set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` on the server, or pass `model=`. See [models.md](models.md). Keep keys in your environment or in a `.env` file that git ignores.
+
+For Vertex AI, use your Google credentials instead of a key, and name the project and location:
+
+```python
+glimpse.attach(model='vertex:claude-opus-5-5', project='my-project', location='global')
+```
+
+To have answers checked before they are shown, or to use your own Google ADK agent, see [engines.md](engines.md).
 
 With no credentials, Glimpse runs in **offline demo mode**: it answers from simple keyword rules over the page, and the panel shows a banner saying so. This lets you try the examples without a key. It is not a replacement for a model.
 

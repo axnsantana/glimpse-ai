@@ -13,7 +13,7 @@ PageContext                    a framework-neutral snapshot, built at the moment
 Context builder                drops fields not on screen, runs your redact hook, computes
    |                           statistics, and fits everything into the token budget
    v
-Engine                         direct, offline or your own, given messages and the snapshot
+Engine                         direct, council, ADK, offline or your own, given messages and the snapshot
    |
    v
 Model provider                 only if the engine calls one
@@ -31,8 +31,12 @@ Panel                          in a Shadow DOM, building DOM nodes with textCont
 |---|---|
 | `offline` | Nowhere. It stays in your process |
 | `direct` with `anthropic:` | Anthropic's API |
+| `direct` with `vertex:` | Google Cloud Vertex AI, in the project and location you set |
+| `direct` with `gemini:` | Google's Gemini API |
 | `direct` with `openai:` | OpenAI's API |
 | `direct` with `ollama:` or a `base_url` | That server |
+| `council` | The same place as `direct` with its model strings. Each role may use a different model |
+| `adk` or your ADK agent | Wherever the agent's models and tools send it. Your own tools receive the arguments the model gives them |
 | Your own engine | Wherever your code sends it |
 
 Glimpse itself has no telemetry and no hosted service.

@@ -31,7 +31,7 @@ conda env create -f environment.yml && conda activate glimpse
 python examples/02_sales_dashboard.py
 ```
 
-For real answers, set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` on the server, or run a local model. See [Choosing a model](docs/models.md).
+For real answers, set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` on the server, point it at a Google Cloud project for Vertex AI, or run a local model. See [Choosing a model](docs/models.md).
 
 ## Examples
 
@@ -49,6 +49,7 @@ Each one is a small runnable app, and each one runs in the test suite as it ship
 | 08 | [Privacy and security](examples/08_privacy_and_security.py) | Secrets stay out, and a compromised model cannot exfiltrate data |
 | 09 | [Developer context](examples/09_developer_context.py) | Adding what the screen cannot show |
 | 10 | [Two users](examples/10_two_users.py) | Sessions that never see each other |
+| 11 | [Cloud and agents](examples/11_cloud_and_agents.py) | Vertex AI with a project and region, the council engine, and your own ADK agent |
 
 ## What makes it different
 
@@ -60,7 +61,7 @@ Passing data to a chat function by hand works until users start filtering. Then 
 | **Stays inside a budget** | Large tables and series become statistics computed in Python, plus a visible "Showing 50 of 12,000 rows" and read-only tools to fetch more |
 | **Shows its work** | "What the assistant saw" under each answer, and sources that scroll to the element used |
 | **Safe by default** | Passwords withheld, hidden text ignored, images and external links in answers disabled, sessions isolated |
-| **Your model** | Claude, OpenAI, local models, or your own agent. No cloud service of ours, and no agent framework required |
+| **Your model** | Claude and Gemini, on their APIs or on Vertex AI, OpenAI, local models, a council of models that checks its answers, a Google ADK agent, or your own. No cloud service of ours, and no agent framework required |
 | **Small** | NiceGUI is the only required dependency |
 
 ![The panel beside a host app with its own drawers and hostile CSS](docs/images/existing-layout.png)
@@ -77,10 +78,12 @@ Everything runs in your NiceGUI process. Read [Data flow](docs/data-flow.md) to 
 
 - [Getting started](docs/getting-started.md)
 - [Choosing a model](docs/models.md)
+- [Engines: direct, council, ADK and your own](docs/engines.md)
 - [Data flow](docs/data-flow.md)
 - [Visibility policy](docs/visibility-policy.md): what counts as "seen"
 - [Security and privacy](docs/security.md)
 - [Known limits](docs/known-limits.md)
+- [Releasing](docs/releasing.md)
 - [Versioning](docs/versioning.md)
 - [NiceGUI internals](docs/nicegui-internals.md)
 - [Requirements status](docs/requirements-status.md): each SRS requirement and its evidence

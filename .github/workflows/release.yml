@@ -1,0 +1,115 @@
+name: Release
+
+# Publishing a GitHub release publishes that version to PyPI. See docs/releasing.md.
+#
+# PyPI trusts this workflow directly (trusted publishing), so no PyPI token is stored in
+# GitHub. Running the workflow by hand checks and builds without publishing anything.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Check the version and run the tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - name: The release tag must match the package version
+        if: github.event_name == 'release'
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          if [ "${TAG#v}" != "$version" ]; then
+            echo "::error::The release tag is $TAG, but pyproject.toml says $version. Tag the release v$version."
+            exit 1
+          fi
+      - run: pip install -e ".[dev]"
+      - run: ruff check src tests examples
+      - run: pytest
+
+  build:
+    name: Build and inspect the distribution
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - run: pip install build twine
+      - run: python -m build
+      - name: List what goes into the build
+        run: |
+          python -m zipfile -l dist/*.whl
+          tar tzf dist/*.tar.gz
+      - name: Refuse stray files
+        # A PyPI upload cannot be taken back, so a secret or an environment must never get in.
+        run: |
+          if tar tzf dist/*.tar.gz | grep -E '(^|/)(\.env|\.venv|venv|env|\.vscode|site-packages|\.github|site)(/|$)'; then
+            echo "::error::The sdist holds files that must not be published."
+            exit 1
+          fi
+          if python -m zipfile -l dist/*.whl | awk 'NR > 1 {print $1}' | grep -vE '^(glimpse/|glimpse_ai-[^/]+\.dist-info/)'; then
+            echo "::error::The wheel holds files outside the glimpse package."
+            exit 1
+          fi
+      - run: python -m twine check --strict dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    name: Publish to PyPI
+    if: github.event_name == 'release'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/glimpse-ai/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  attach:
+    name: Attach the files to the GitHub release
+    if: github.event_name == 'release'
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber

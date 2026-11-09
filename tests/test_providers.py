@@ -25,6 +25,7 @@ class FakeProvider:
     def __init__(self) -> None:
         self.requests: list[dict] = []
         self.headers: list[dict] = []
+        self.paths: list[str] = []
         self.responses: list[tuple[int, list[str] | dict]] = []
 
 
@@ -38,6 +39,7 @@ def provider() -> Iterator[tuple[FakeProvider, str]]:
         def do_POST(self) -> None:
             body = json.loads(self.rfile.read(int(self.headers['content-length'])))
             fake.requests.append(body)
+            fake.paths.append(self.path)
             fake.headers.append({key.lower(): value for key, value in self.headers.items()})
             status, payload = fake.responses.pop(0)
             if isinstance(payload, dict):
@@ -309,3 +311,182 @@ async def test_missing_sdk_says_which_extra_to_install(monkeypatch):
     assert 'pip install anthropic' in turn.error
     turn, _ = await answer(DirectEngine('openai:gpt-5'))
     assert 'pip install openai' in turn.error
+
+
+# Google Cloud: Claude and Gemini on Vertex AI, and Gemini with an API key.
+
+
+class FakeGoogleCredentials:
+    """Stands in for Application Default Credentials, so no test needs a Google account."""
+
+    token = 'vertex-token'
+    expired = False
+    valid = True
+    quota_project_id = None
+    universe_domain = 'googleapis.com'
+
+    def refresh(self, request) -> None:
+        pass
+
+    def before_request(self, request, method, url, headers) -> None:
+        headers['authorization'] = f'Bearer {self.token}'
+
+
+@pytest.fixture
+def google_credentials(monkeypatch):
+    pytest.importorskip('google.auth')
+    import google.auth
+
+    monkeypatch.setattr(google.auth, 'default', lambda *args, **kwargs: (FakeGoogleCredentials(), 'adc-project'))
+
+
+async def test_claude_on_vertex_uses_the_project_region_and_no_api_key(provider, monkeypatch, google_credentials):
+    fake, url = provider
+    monkeypatch.setenv('ANTHROPIC_VERTEX_BASE_URL', url)
+    fake.responses = [
+        (200, anthropic_stream([{'type': 'text', 'text': 'Checking. '}, TOOL_CALL], 'tool_use')),
+        (200, anthropic_stream([{'type': 'text', 'text': 'The total is 30 [ref:table-1].'}])),
+    ]
+    turn, _ = await answer(DirectEngine('vertex:claude-opus-5-5', project='my-project', location='us-east5'))
+    assert turn.status == 'done', turn.error
+    assert turn.text == 'Checking. The total is 30 [ref:table-1].'
+    assert fake.paths[0] == '/projects/my-project/locations/us-east5/publishers/anthropic/models/claude-opus-5-5:streamRawPredict'
+    assert fake.headers[0]['authorization'] == 'Bearer vertex-token'
+    assert 'x-api-key' not in fake.headers[0]
+    first = fake.requests[0]
+    assert first['thinking'] == {'type': 'adaptive'} and first['output_config'] == {'effort': 'medium'}
+    assert all(tool['eager_input_streaming'] for tool in first['tools']), 'Vertex AI supports eager tool streaming'
+    assert 'fallbacks' not in first, 'server-side fallback is a first-party API feature only'
+    assert 'server-side-fallback' not in fake.headers[0].get('anthropic-beta', '')
+    assert fake.requests[1]['messages'][-1]['content'][0]['type'] == 'tool_result'
+
+
+async def test_vertex_project_and_location_come_from_the_environment(provider, monkeypatch, google_credentials):
+    fake, url = provider
+    monkeypatch.setenv('ANTHROPIC_VERTEX_BASE_URL', url)
+    monkeypatch.setenv('GOOGLE_CLOUD_PROJECT', 'env-project')
+    fake.responses = [(200, anthropic_stream([{'type': 'text', 'text': 'Hi'}]))]
+    turn, _ = await answer(DirectEngine('vertex:claude-sonnet-5-5'))
+    assert turn.status == 'done', turn.error
+    assert fake.paths[0].startswith('/projects/env-project/locations/global/'), 'the location defaults to global'
+
+
+async def test_vertex_without_a_project_says_what_to_do():
+    turn, _ = await answer(DirectEngine('vertex:claude-opus-5-5'))
+    assert turn.status == 'error' and 'GOOGLE_CLOUD_PROJECT' in turn.error
+
+
+async def test_vertex_without_google_credentials_says_what_to_do(provider, monkeypatch):
+    pytest.importorskip('google.auth')
+    import google.auth
+    from google.auth.exceptions import DefaultCredentialsError
+
+    def no_credentials(*args, **kwargs):
+        raise DefaultCredentialsError('Your default credentials were not found. internal detail')
+
+    fake, url = provider
+    monkeypatch.setenv('ANTHROPIC_VERTEX_BASE_URL', url)
+    monkeypatch.setattr(google.auth, 'default', no_credentials)
+    turn, _ = await answer(DirectEngine('vertex:claude-opus-5-5', project='p'))
+    assert turn.status == 'error'
+    assert 'gcloud auth application-default login' in turn.error and 'internal detail' not in turn.error
+    assert fake.requests == []
+
+
+def gemini_chunk(parts=None, finish=None, usage=None) -> str:
+    candidate = {'content': {'role': 'model', 'parts': parts or []}, 'index': 0}
+    if finish:
+        candidate['finishReason'] = finish
+    body = {'candidates': [candidate]}
+    if usage:
+        body['usageMetadata'] = usage
+    return 'data: ' + json.dumps(body) + '\r\n\r\n'
+
+
+GEMINI_TOOL_STREAM = [
+    gemini_chunk([{'text': 'Checking. '}]),
+    gemini_chunk([{'functionCall': {'name': 'aggregate_rows', 'args': {
+        'element_id': 'table-1', 'column': 'amount', 'operation': 'sum'}}, 'thoughtSignature': 'c2lnbmF0dXJl'}],
+        finish='STOP', usage={'promptTokenCount': 60, 'candidatesTokenCount': 4, 'thoughtsTokenCount': 2}),
+]
+GEMINI_TEXT_STREAM = [
+    gemini_chunk([{'text': 'The total is '}]),
+    gemini_chunk([{'text': '30 [ref:table-1].'}], finish='STOP',
+                 usage={'promptTokenCount': 80, 'candidatesTokenCount': 6}),
+]
+
+
+async def test_gemini_with_an_api_key_round_trip(provider, monkeypatch):
+    pytest.importorskip('google.genai')
+    fake, url = provider
+    monkeypatch.setenv('GOOGLE_GEMINI_BASE_URL', url)
+    monkeypatch.setenv('GEMINI_API_KEY', 'gemini-key')
+    fake.responses = [(200, GEMINI_TOOL_STREAM), (200, GEMINI_TEXT_STREAM)]
+    turn, _ = await answer(DirectEngine('gemini:gemini-flash-latest'))
+    assert turn.status == 'done', turn.error
+    assert turn.text == 'Checking. The total is 30 [ref:table-1].'
+    assert turn.usage.input_tokens == 140 and turn.usage.output_tokens == 12
+    assert 'models/gemini-flash-latest:streamGenerateContent' in fake.paths[0]
+    assert fake.headers[0]['x-goog-api-key'] == 'gemini-key'
+
+    first, second = fake.requests
+    assert '<page_state>\n' not in first['systemInstruction']['parts'][0]['text'], 'no page data in the system prompt'
+    assert '<page_state>' in first['contents'][-1]['parts'][0]['text']
+    declarations = first['tools'][0]['functionDeclarations']
+    assert {item['name'] for item in declarations} == {'get_rows', 'aggregate_rows', 'get_series', 'get_element'}
+    assert first['toolConfig']['functionCallingConfig']['mode'] == 'AUTO'
+    # The model turn goes back with its thought signature, then the results in one user turn.
+    model_turn, results = second['contents'][-2:]
+    assert model_turn['role'] == 'model'
+    assert any(part.get('thoughtSignature') == 'c2lnbmF0dXJl' for part in model_turn['parts'])
+    response = results['parts'][0]['functionResponse']
+    assert results['role'] == 'user' and response['name'] == 'aggregate_rows'
+    assert '"result": 30' in response['response']['result']
+    assert second['contents'][:-2] == first['contents'], 'the prefix must not change within a turn'
+
+
+async def test_gemini_on_vertex_uses_the_project_and_location(provider, monkeypatch, google_credentials):
+    pytest.importorskip('google.genai')
+    fake, url = provider
+    monkeypatch.setenv('GOOGLE_VERTEX_BASE_URL', url)
+    fake.responses = [(200, GEMINI_TEXT_STREAM)]
+    turn, _ = await answer(DirectEngine('vertex:gemini-flash-latest', project='my-project', location='europe-west4'))
+    assert turn.status == 'done', turn.error
+    assert '/projects/my-project/locations/europe-west4/publishers/google/models/gemini-flash-latest' in fake.paths[0]
+    assert fake.headers[0]['authorization'] == 'Bearer vertex-token'
+
+
+async def test_gemini_cut_off_tool_call_never_runs(provider, monkeypatch):
+    pytest.importorskip('google.genai')
+    fake, url = provider
+    monkeypatch.setenv('GOOGLE_GEMINI_BASE_URL', url)
+    monkeypatch.setenv('GEMINI_API_KEY', 'k')
+    fake.responses = [(200, [gemini_chunk([{'functionCall': {'name': 'get_rows', 'args': {'element_id': 'table-1'}}}],
+                                          finish='MAX_TOKENS')])]
+    turn, _ = await answer(DirectEngine('gemini:gemini-flash-latest'))
+    assert any('cut off' in notice for notice in turn.notices)
+    assert len(fake.requests) == 1 and turn.tool_calls == []
+
+
+@pytest.mark.parametrize('status, expected', [
+    (401, 'rejected the credentials'),
+    (429, 'rate limiting'),
+    (404, 'not found'),
+    (400, 'returned an error (400)'),
+])
+@pytest.mark.allow_error_logs
+async def test_gemini_errors_become_safe_messages(provider, monkeypatch, status, expected):
+    pytest.importorskip('google.genai')
+    fake, url = provider
+    monkeypatch.setenv('GOOGLE_GEMINI_BASE_URL', url)
+    monkeypatch.setenv('GEMINI_API_KEY', 'k')
+    fake.responses = [(status, {'error': {'code': status, 'message': 'internal detail secret', 'status': 'X'}})] * 3
+    turn, _ = await answer(DirectEngine('gemini:gemini-flash-latest'))
+    assert turn.status == 'error' and expected in turn.error
+    assert 'secret' not in turn.error
+
+
+async def test_gemini_without_a_key_says_what_to_do():
+    pytest.importorskip('google.genai')
+    turn, _ = await answer(DirectEngine('gemini:gemini-flash-latest'))
+    assert 'GEMINI_API_KEY' in turn.error

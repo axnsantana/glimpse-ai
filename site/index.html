@@ -274,15 +274,18 @@ ui.run()</pre>
 <section class="row">
   <div class="prose">
     <h2>Your model, or your own agent</h2>
-    <p>Claude, OpenAI and any OpenAI-compatible server work with no agent framework, and all calls run on your server. NiceGUI is the only required dependency, and provider SDKs are optional.</p>
-    <p>To use your own agent, write an async generator. Capture, budgets and sanitizing still apply, and you can use the same read-only tools.</p>
+    <p>Claude and Gemini, on their own APIs or on Google Cloud Vertex AI, OpenAI and any OpenAI-compatible server work with no agent framework, and all calls run on your server. NiceGUI is the only required dependency, and provider SDKs are optional.</p>
+    <p>A council engine can have a second model check each answer against the page before the user sees it. To use your own agent, pass a Google ADK agent as it is, or write an async generator. Capture, budgets and sanitizing still apply, and you can use the same read-only tools.</p>
   </div>
 <pre class="code"><span class="k"># Pick a model</span>
 glimpse.attach(model='anthropic:claude-opus-5-5')
-glimpse.attach(model='openai:gpt-5')
+glimpse.attach(model='vertex:claude-opus-5-5', project='my-project')
 glimpse.attach(model='ollama:llama3.2')
+glimpse.attach(engine='council', model='vertex:gemini-flash-latest')
 
 <span class="k"># Or bring your own agent</span>
+glimpse.attach(engine=my_adk_agent)
+
 <span class="k">async def</span> my_engine(messages, page):
     yield await my_agent.run(page.to_prompt())
 
@@ -303,6 +306,7 @@ glimpse.attach(engine=my_engine)</pre>
     <li><span class="n">08</span><div><a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/08_privacy_and_security.py">Privacy and security</a><span class="d">Secrets stay out, and attacks stay inert</span></div></li>
     <li><span class="n">09</span><div><a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/09_developer_context.py">Developer context</a><span class="d">Adding what the screen can’t show</span></div></li>
     <li><span class="n">10</span><div><a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/10_two_users.py">Two users</a><span class="d">Sessions that never see each other</span></div></li>
+    <li><span class="n">11</span><div><a href="https://github.com/axnsantana/glimpse-ai/blob/main/examples/11_cloud_and_agents.py">Cloud and agents</a><span class="d">Vertex AI, a council of models, and your own ADK agent</span></div></li>
   </ol>
 </section>
 

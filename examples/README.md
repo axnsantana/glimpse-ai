@@ -21,6 +21,7 @@ No API key is needed. Without one, the panel runs in offline demo mode and says 
 | [08_privacy_and_security.py](08_privacy_and_security.py) | Secrets stay out, attacks stay inert | Inspect `/`, then run the attack at `/red-team` |
 | [09_developer_context.py](09_developer_context.py) | Adding what the screen cannot show | Flip the switch and ask about the notes |
 | [10_two_users.py](10_two_users.py) | Two users on one server stay separate | Open `?user=ana` and `?user=ben` side by side |
+| [11_cloud_and_agents.py](11_cloud_and_agents.py) | Vertex AI with a project and region, the council engine, and your own ADK agent | Ask the same question at `/`, `/council` and `/adk` |
 
 ## Why this is useful
 

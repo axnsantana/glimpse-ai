@@ -7,14 +7,48 @@ You choose the model, and Glimpse does not depend on any cloud service of its ow
 | `model=` | Provider | Needs | Credentials |
 |---|---|---|---|
 | `anthropic:claude-opus-5-5` | Anthropic | The `anthropic` package | `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` or an `ant auth login` profile |
+| `vertex:claude-opus-5-5` | Claude on Google Cloud Vertex AI | `anthropic[vertex]` | A Google Cloud project and Application Default Credentials |
+| `vertex:gemini-flash-latest` | Gemini on Google Cloud Vertex AI | `google-genai`, Python 3.11 or later | A Google Cloud project and Application Default Credentials |
+| `gemini:gemini-flash-latest` | Gemini API | `google-genai`, Python 3.11 or later | `GEMINI_API_KEY` or `GOOGLE_API_KEY` |
 | `openai:gpt-5` | OpenAI | The `openai` package | `OPENAI_API_KEY` |
 | `ollama:llama3.2` | A local Ollama server | The `openai` package | None |
+
+The extras install the right packages: `.[anthropic]`, `.[vertex]`, `.[gemini]`, `.[openai]`, and `.[adk]` for the [ADK engine](engines.md#adk).
 
 Any other OpenAI-compatible server (vLLM, LM Studio, a gateway) works with no special handling:
 
 ```python
 glimpse.attach(engine=glimpse.DirectEngine('openai:my-model', base_url='http://localhost:8000/v1'))
 ```
+
+## Google Cloud Vertex AI
+
+Vertex AI calls use a Google Cloud project and a location, and your Google credentials instead of an API key. Set them up once:
+
+```bash
+pip install -e ".[vertex]"
+gcloud auth application-default login       # or set GOOGLE_APPLICATION_CREDENTIALS to a service account key
+```
+
+Then pass the project and location to `attach()`:
+
+```python
+glimpse.attach(model='vertex:claude-opus-5-5', project='my-project', location='global')
+glimpse.attach(model='vertex:gemini-flash-latest', project='my-project', location='europe-west4')
+```
+
+Or leave them out and set them in the environment:
+
+| Setting | Argument | Environment, first match wins | Default |
+|---|---|---|---|
+| Project | `project=` | `GOOGLE_CLOUD_PROJECT`, `ANTHROPIC_VERTEX_PROJECT_ID`, `GCLOUD_PROJECT` | None, and the panel says it is missing |
+| Location | `location=` | `GOOGLE_CLOUD_LOCATION`, `CLOUD_ML_REGION` | `global` |
+
+The same arguments work for `DirectEngine`, `CouncilEngine` and `AdkEngine`. `global` routes each request to a region with capacity. Pick a specific region such as `europe-west4` if your data must stay in one place. Not every model is served in every region.
+
+Claude on Vertex AI uses the same model names as Anthropic's API. Gemini names come from Google, and `gemini-flash-latest` is an alias for the newest Flash model. Pin a specific version if answers must not change under you.
+
+Keys and credentials still work for the other providers, so one app can use an API key on one page and Vertex AI on another.
 
 ## How the model is picked
 
@@ -24,7 +58,11 @@ With the default `engine="auto"`, Glimpse uses the first of these that applies:
 2. The `GLIMPSE_MODEL` environment variable
 3. `anthropic:claude-opus-5-5`, if Anthropic credentials are found
 4. `openai:gpt-5`, if `OPENAI_API_KEY` is set
-5. The offline demo engine, with a banner in the panel and a warning in the server log
+5. `gemini:gemini-flash-latest`, if `GEMINI_API_KEY` is set
+6. `vertex:gemini-flash-latest`, if `GOOGLE_GENAI_USE_VERTEXAI=true` and `GOOGLE_CLOUD_PROJECT` are both set
+7. The offline demo engine, with a banner in the panel and a warning in the server log
+
+`GOOGLE_API_KEY` and `GOOGLE_CLOUD_PROJECT` alone are not enough. They are often set for other Google services, and page data should not start going to Gemini because of that. For Claude on Vertex AI, set `GLIMPSE_MODEL=vertex:claude-opus-5-5` or pass `model=`.
 
 Pass `engine="direct"` if you would rather see an error than fall back to the demo.
 
@@ -33,6 +71,12 @@ Pass `engine="direct"` if you would rather see an error than fall back to the de
 For current Claude models the direct engine turns on adaptive thinking and sets `effort` (default `medium`, which you can change with `DirectEngine(effort=...)`). For Fable 5.1, Opus 5.5, Opus 5 and Sonnet 5.5 on the first-party API, it also enables server-side refusal fallback, so a declined request can retry on another model. It handles refusals and cut-off answers by telling the user, and it never runs a tool call from a cut-off response.
 
 A custom `base_url` is treated as a proxy, so first-party-only fields are left out.
+
+On Vertex AI, Claude gets the same adaptive thinking, effort and eager tool streaming. Server-side refusal fallback is an Anthropic API feature only, so on Vertex AI a declined request tells the user it was declined.
+
+## What Glimpse sends to Gemini
+
+The same system prompt, tools and fenced page state as for Claude. `effort=` does not apply to Gemini, which uses its own default thinking. Gemini's thought signatures go back unchanged within a question's tool rounds, as the API requires.
 
 ## Cost
 

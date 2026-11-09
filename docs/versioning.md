@@ -8,9 +8,12 @@ Everything exported from the top-level `glimpse` package and the `glimpse.events
 
 - `attach()`, `describe()`, `exclude()`, `register_extractor()`
 - The engine contract: `Engine`, `Message`, `PageContext`, `ElementSnapshot`, `TableData`, `Series`, `Tool`, and the events
-- `DirectEngine`, `OfflineEngine`, `Pricing`, `Usage`, and the serializers
+- `DirectEngine`, `CouncilEngine`, `AdkEngine`, `OfflineEngine`, `Pricing`, `Usage`, and the serializers
+- Model strings such as `vertex:claude-opus-5-5`, and the `project=` and `location=` options
 
-The rest is internal and can change without notice, including `glimpse.adapters`, the text format of the page state, and the default system prompt. Pass `system_prompt=` and `serializer=` if you depend on exact text.
+The rest is internal and can change without notice, including `glimpse.adapters`, the text format of the page state, the default system prompt and the council's role prompts. Pass `system_prompt=` and `serializer=` if you depend on exact text.
+
+Releases are published to PyPI from GitHub releases. See [releasing.md](releasing.md).
 
 ## NiceGUI
 

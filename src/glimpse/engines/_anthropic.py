@@ -1,7 +1,12 @@
-"""Claude, through the official anthropic SDK. Needs the anthropic package, an optional extra."""
+"""Claude, through the official anthropic SDK. Needs the anthropic package, an optional extra.
+
+Claude on Vertex AI uses the same SDK's Vertex client, with a Google Cloud project and region
+instead of an API key. That needs Google auth: pip install "anthropic[vertex]".
+"""
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import logging
 from collections.abc import AsyncIterator
@@ -10,7 +15,7 @@ from typing import Any
 from ..engine import EngineError, Message
 from ..events import EngineEvent, StepStarted, TextMessageContent
 from ..tools import Tool
-from .direct import RoundResult, ToolCall
+from .direct import GoogleCloud, RoundResult, ToolCall, google_auth_error
 
 log = logging.getLogger('glimpse')
 
@@ -25,7 +30,7 @@ MAX_JSON_RETRIES = 2
 
 class AnthropicProvider:
     def __init__(self, model: str, *, api_key: str | None, base_url: str | None, max_output_tokens: int,
-                 effort: str) -> None:
+                 effort: str, vertex: GoogleCloud | None = None) -> None:
         try:
             import anthropic
         except ImportError as error:
@@ -33,14 +38,24 @@ class AnthropicProvider:
                               'Run: pip install anthropic') from error
         self.anthropic = anthropic
         self.model = model
-        self.first_party = base_url is None
+        self.platform = 'vertex' if vertex else 'anthropic'
+        # Server-side fallback is a first-party API feature. Vertex AI rejects it, and a proxy may.
+        self.fallbacks = vertex is None and base_url is None
+        # Vertex AI supports eager tool input streaming. A proxy may reject the field.
+        self.eager_tools = base_url is None
         self.max_output_tokens = max_output_tokens
         self.effort = effort
         arguments: dict[str, Any] = {}
-        if api_key:
-            arguments['api_key'] = api_key
         if base_url:
             arguments['base_url'] = base_url
+        if vertex is not None:
+            if importlib.util.find_spec('google.auth') is None:
+                raise EngineError('Claude on Vertex AI needs Google auth on the server. '
+                                  'Run: pip install "anthropic[vertex]"')
+            self.client = anthropic.AsyncAnthropicVertex(project_id=vertex.project, region=vertex.location, **arguments)
+            return
+        if api_key:
+            arguments['api_key'] = api_key
         self.client = anthropic.AsyncAnthropic(**arguments)
 
     def conversation(self, system: str, messages: list[Message], tools: list[Tool]) -> _AnthropicConversation:
@@ -77,15 +92,15 @@ class _AnthropicConversation:
         if provider.model.startswith(ADAPTIVE_THINKING_PREFIXES):
             parameters['thinking'] = {'type': 'adaptive'}
             parameters['output_config'] = {'effort': provider.effort}
-        if provider.first_party and provider.model in SERVER_FALLBACK_MODELS:
+        if provider.fallbacks and provider.model in SERVER_FALLBACK_MODELS:
             parameters['betas'] = [FALLBACK_BETA]
             parameters['fallbacks'] = 'default'
         return parameters
 
     def _tool(self, tool: Tool) -> dict[str, Any]:
         definition = {'name': tool.name, 'description': tool.description, 'input_schema': tool.parameters}
-        # A proxy may reject this field, so only send it to the real API.
-        if self.provider.first_party:
+        # A proxy may reject this field, so only send it to Anthropic's API and Vertex AI.
+        if self.provider.eager_tools:
             definition['eager_input_streaming'] = True
         return definition
 
@@ -112,7 +127,12 @@ class _AnthropicConversation:
                     raise EngineError('The model sent an invalid tool call. Please try again.') from None
                 continue
             except anthropic.AuthenticationError as error:
-                raise EngineError('The model provider rejected the API key configured on the server.') from error
+                what = 'Google Cloud credentials' if provider.platform == 'vertex' else 'API key'
+                raise EngineError(f'The model provider rejected the {what} configured on the server.') from error
+            except anthropic.PermissionDeniedError as error:
+                log.error('%s refused access to model %r: %s', provider.platform, provider.model, error)
+                raise EngineError('The model provider refused access with the credentials configured on the '
+                                  'server.') from error
             except anthropic.RateLimitError as error:
                 raise EngineError('The model provider is rate limiting this app. Please try again shortly.') from error
             except anthropic.NotFoundError as error:
@@ -127,6 +147,11 @@ class _AnthropicConversation:
             except TypeError as error:
                 if 'authentication' in str(error).lower() or 'api_key' in str(error).lower():
                     raise EngineError('No API key is configured on the server. Set ANTHROPIC_API_KEY.') from error
+                raise
+            except Exception as error:
+                # The Vertex client loads Google credentials on the first request.
+                if (safe := google_auth_error(error)) is not None:
+                    raise safe from error
                 raise
 
             pause_input += _input_tokens(message.usage)
