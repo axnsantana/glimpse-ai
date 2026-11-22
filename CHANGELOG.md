@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 (2026-11-22)
 
 - **Other tabs, slides and collapsed sections are read.** The assistant now reads the content of every `ui.tab_panels` panel, every `ui.carousel` slide and every collapsed `ui.expansion`, not only what is shown, because these usually fold one view to save room. Entries the user cannot see now are marked as such, and the model is told to say where it found an answer. Pass `read_inactive_sections=False` to `attach()` to send only a summary of each, as before. Steppers, dialogs, menus and drawers are unchanged.
 - **Filters left there carry over.** Grids and charts in those sections are probed too. A grid the user filtered keeps its filter after they leave its tab or collapse its section, and the assistant sees the filtered rows. A section that is not loaded in the page, such as a tab never opened, is read from the server, which is what it will show.
