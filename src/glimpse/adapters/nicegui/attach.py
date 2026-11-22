@@ -33,6 +33,7 @@ def attach(
     system_prompt: Any = None,
     budget: int = 16000,
     visibility: str = 'visible',
+    read_inactive_tabs: bool = True,
     exclude_fields: Collection[Any] = (),
     redact: Callable[[str], str] | None = None,
     serializer: Serializer = text_serializer,
@@ -69,7 +70,10 @@ def attach(
     :param context: extra facts for the assistant, or a function returning them. End users can extract this text
     :param system_prompt: replaces the built-in system prompt exactly (a string, or a function of the page)
     :param budget: the most tokens one request may use, estimated unless count_tokens is exact
-    :param visibility: "visible" reads what is on screen. "reachable" also reads inactive tabs and collapsed sections
+    :param visibility: "visible" reads what is on screen, and the other tabs. "reachable" also reads collapsed
+        sections, closed dialogs and drawers, and other steps and slides
+    :param read_inactive_tabs: read the content of tabs other than the selected one, with any filters the user left
+        on them, marked as not on screen. False sends only a summary of each. "reachable" always reads them
     :param exclude_fields: column or input names to withhold, as strings or compiled regular expressions
     :param redact: runs on every string before it can leave the process
     :param serializer: turns a snapshot into model input
@@ -94,7 +98,8 @@ def attach(
     if isinstance(pricing, dict):
         pricing = Pricing(**pricing)
     config = GlimpseConfig(
-        context=context, budget=budget, visibility=visibility, exclude_fields=tuple(exclude_fields), redact=redact,
+        context=context, budget=budget, visibility=visibility, read_inactive_tabs=read_inactive_tabs,
+        exclude_fields=tuple(exclude_fields), redact=redact,
         serializer=serializer, count_tokens=count_tokens, on_usage=on_usage, pricing=pricing,
         max_session_tokens=max_session_tokens, max_session_cost=max_session_cost,
         allowed_link_hosts=tuple(allowed_link_hosts), probe=probe, probe_timeout=probe_timeout,

@@ -289,7 +289,7 @@ export default {
       const answer = nodes.answer;
       const details = nodes.details;
       answer.replaceChildren();
-      const sources = new Map(turn.sources.map((source) => [source.id, source]));
+      const sources = new Map(turn.sources.map((source) => [source.id, { ...source, turn: turn.id }]));
       if (turn.blocks.length) {
         const body = make("div", "body");
         for (const block of turn.blocks) body.appendChild(this.renderBlock(block, sources));
@@ -301,7 +301,7 @@ export default {
       if (turn.sources.length) {
         const meta = make("div", "meta");
         meta.appendChild(make("span", "", "Sources:"));
-        for (const source of turn.sources) {
+        for (const source of sources.values()) {
           const chip = make("button", "source", source.label);
           chip.type = "button";
           chip.title = `Show ${source.label} on the page`;
@@ -367,13 +367,26 @@ export default {
       box.appendChild(make("pre", "", data.page));
     },
     reveal(source) {
-      const target = source.dom ? document.getElementById(source.dom) : null;
-      if (!target) return;
-      target.scrollIntoView({ behavior: "smooth", block: "center" });
-      target.animate(
-        [{ outline: "3px solid #3b5bdb", outlineOffset: "2px" }, { outline: "3px solid transparent", outlineOffset: "2px" }],
-        { duration: 1600, easing: "ease-out" },
-      );
+      const find = () => (source.dom ? document.getElementById(source.dom) : null);
+      const show = (target) => {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        target.animate(
+          [{ outline: "3px solid #3b5bdb", outlineOffset: "2px" }, { outline: "3px solid transparent", outlineOffset: "2px" }],
+          { duration: 1600, easing: "ease-out" },
+        );
+      };
+      const target = find();
+      if (target) return show(target);
+      if (!source.reveal) return;
+      // The source is on another tab. The server opens it, as a click on the tab would, and then it can be shown.
+      this.$emit("glimpse_reveal", { turn: source.turn, id: source.id });
+      const deadline = performance.now() + 2000;
+      const wait = () => {
+        const found = find();
+        if (found) requestAnimationFrame(() => show(found));
+        else if (performance.now() < deadline) setTimeout(wait, 50);
+      };
+      setTimeout(wait, 50);
     },
     renderBlock(block, sources) {
       switch (block.t) {

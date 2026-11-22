@@ -18,7 +18,7 @@ Claude Opus 5.5 has been run live on Anthropic's API. No other provider has, inc
 | CAP-4 | SHOULD | Done | `test_snapshot_is_built_when_the_user_asks_not_before` |
 | CAP-5 | SHOULD, prov. | Done | `test_probe_reads_real_chart_zoom_and_legend` (e2e). Spike S1's formal bake-off against DOM and screenshots was not run |
 | CAP-6 | SHOULD | Done | `[kind-id]` on each entry, or your own with `describe(id=)` |
-| CAP-7 | MUST | Done | [visibility-policy.md](visibility-policy.md), `test_visibility_policy_*` |
+| CAP-7 | MUST | Done | [visibility-policy.md](visibility-policy.md), `test_visibility_policy_*`, `test_inactive_tabs_are_read_by_default_and_marked_as_not_on_screen`, `test_other_tabs_are_read_with_the_filters_left_on_them_and_a_source_opens_its_tab` (e2e) |
 | CAP-8 | MAY | Not done | Screenshots. Unreadable widgets say so instead |
 | CAP-9 | SHOULD | Done | `serializer=`, `json_serializer` |
 

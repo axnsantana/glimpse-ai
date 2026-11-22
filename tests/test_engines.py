@@ -257,7 +257,7 @@ async def test_sources_come_from_citations_and_tool_use():
         yield 'Up [ref:chart-1], and [ref:made-up].'
 
     turn = await run(session_with(engine, page))
-    assert turn.sources() == [{'id': 'chart-1', 'label': 'Sales', 'kind': 'chart', 'dom': 'c1'}]
+    assert turn.sources() == [{'id': 'chart-1', 'label': 'Sales', 'kind': 'chart', 'dom': 'c1', 'reveal': False}]
     assert 'made-up' not in json.dumps(turn.blocks)
 
 
@@ -311,6 +311,22 @@ async def test_offline_engine(question, expected):
 async def test_offline_engine_ignores_series_the_user_hid():
     turn = await run(session_with(OfflineEngine(delay=0), offline_page()), 'What is the highest value?')
     assert '100' not in turn.text
+
+
+async def test_offline_engine_answers_from_another_tab_and_prefers_the_screen_on_a_tie():
+    page = offline_page()
+    page.elements += [
+        glimpse.ElementSnapshot(id='table-1', kind='table', label='Headcount', section='Tab: Team',
+                                hidden_reason='inactive tab',
+                                table=glimpse.TableData(columns=['team', 'people'],
+                                                        rows=[{'team': 'Ops', 'people': 4}, {'team': 'Dev', 'people': 9}])),
+        glimpse.ElementSnapshot(id='chart-2', kind='chart', label='Revenue', section='Tab: Team',
+                                hidden_reason='inactive tab', series=[glimpse.Series(name='Revenue', x=['Jan'], y=[500])]),
+    ]
+    turn = await run(session_with(OfflineEngine(delay=0), page), 'What is the highest headcount?')
+    assert 'Dev' in turn.text and '[ref:table-1]' in turn.text and 'on the Team tab' in turn.text
+    turn = await run(session_with(OfflineEngine(delay=0), page), 'What is the highest revenue?')
+    assert '[ref:chart-1]' in turn.text and '500' not in turn.text and 'not on screen' not in turn.text
 
 
 # Choosing a model.

@@ -13,9 +13,12 @@ The assistant reads applied state, not just base data. Try this sequence:
 3. Open the Orders tab, filter or sort a grid column, and ask "Which order has
    the highest amount?" The grid filter only exists in the browser, and Glimpse
    reads it with a small probe.
-4. Drag the zoom slider on the chart, or click a legend entry to hide a series,
+4. Go back to Overview and ask "Which customer brings in the most revenue?"
+   The answer comes from the Customers tab, and its source opens that tab. The
+   other tabs are read too, and the Orders grid keeps the filter you set there.
+5. Drag the zoom slider on the chart, or click a legend entry to hide a series,
    and ask about the trend.
-5. Open "What the assistant saw" under an answer to see exactly what was sent.
+6. Open "What the assistant saw" under an answer to see exactly what was sent.
 """
 
 import random

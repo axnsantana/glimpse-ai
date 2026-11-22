@@ -1,8 +1,9 @@
 """The context builder: fits one request into the token budget (CTX-1, CTX-4).
 
-Each part has a limit, and the page falls down a ladder of detail until it fits. History
-gives way oldest first. Whatever gets cut leaves a visible notice, so the model knows
-what it is missing instead of guessing.
+Each part has a limit, and the page falls down a ladder of detail until it fits. Entries
+off screen, such as other tabs, give way before what is on screen. History gives way
+oldest first. Whatever gets cut leaves a visible notice, so the model knows what it is
+missing instead of guessing.
 """
 
 from __future__ import annotations
@@ -15,7 +16,7 @@ from .config import GlimpseConfig
 from .engine import EngineError, Message
 from .page import ContextReport, PageContext, TableData
 from .prompt import FENCE_OVERHEAD_TOKENS
-from .serialize import LADDER
+from .serialize import LADDER, Detail
 from .tokens import estimate_tokens, truncate_to_tokens
 
 QUESTION_SHARE = 0.2
@@ -28,6 +29,8 @@ MAX_OVERHEAD_SHARE = 0.5
 HISTORY_MESSAGE_SHARE = 0.25
 ESTIMATE_MARGIN = 0.75
 """Plan to use this share of the budget when tokens are estimated. Measured estimates ran as low as 74% of the real count."""
+OFF_SCREEN_FLOOR = 3
+"""The LADDER level, statistics with no rows, that entries off screen fall to before the screen loses any detail."""
 
 
 def check_budget(budget: int, overhead_text: str, count: Callable[[str], int], reserved_tokens: int = 0) -> None:
@@ -73,7 +76,7 @@ def prepare_request(
     context_tokens = count(page.developer_context)
     available = total - overhead - question_tokens - context_tokens
 
-    page.rendered, level, truncated = _fit_page(page, int(available * PAGE_SHARE), config)
+    page.rendered, level, off_screen_level, truncated = _fit_page(page, int(available * PAGE_SHARE), config)
     page_tokens = count(page.rendered)
 
     reserve = int(total * TOOL_RESERVE_SHARE)
@@ -88,20 +91,34 @@ def prepare_request(
         question_tokens=question_tokens,
         context_tokens=context_tokens,
         detail_level=level,
+        off_screen_detail_level=off_screen_level,
         dropped_messages=dropped,
         truncated_page=truncated,
     )
     return [*kept, Message('user', question)], page
 
 
-def _fit_page(page: PageContext, budget: int, config: GlimpseConfig) -> tuple[str, int, bool]:
+def detail_steps(page: PageContext) -> list[tuple[int, int, Detail]]:
+    """The detail to try, most first, as (level on screen, level off screen, detail).
+
+    Entries off screen fall to OFF_SCREEN_FLOOR first, then both fall together.
+    """
+    if not any(element.hidden_reason for element in page.elements):
+        return [(level, level, detail) for level, detail in enumerate(LADDER)]
+    pairs = [(0, level) for level in range(OFF_SCREEN_FLOOR + 1)]
+    pairs += [(level, max(level, OFF_SCREEN_FLOOR)) for level in range(1, len(LADDER))]
+    return [(on, off, LADDER[on] if on == off else replace(LADDER[on], off_screen=LADDER[off])) for on, off in pairs]
+
+
+def _fit_page(page: PageContext, budget: int, config: GlimpseConfig) -> tuple[str, int, int, bool]:
     text = ''
-    for level, detail in enumerate(LADDER):
+    for level, off_screen_level, detail in detail_steps(page):
         text = config.serializer(page, detail)
         if config.count_tokens(text) <= budget:
-            return text, level, False
+            return text, level, off_screen_level, False
     notice = '\n[The page is too large to list in full. Some elements are missing from this list.]'
-    return truncate_to_tokens(text, budget, config.count_tokens, notice), len(LADDER) - 1, True
+    last = len(LADDER) - 1
+    return truncate_to_tokens(text, budget, config.count_tokens, notice), last, last, True
 
 
 def _fit_history(history: list[Message], budget: int, count: Callable[[str], int]) -> tuple[list[Message], int, int]:

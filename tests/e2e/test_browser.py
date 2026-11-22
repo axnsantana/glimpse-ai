@@ -112,6 +112,13 @@ def what_was_sent(page) -> str:
     return block.inner_text()
 
 
+def section(sent: str, title: str) -> str:
+    """The part of what was sent under one heading, such as "Tab: Orders". Other tabs are in the context too."""
+    start = sent.index(f'## {title}')
+    end = sent.find('\n## ', start + 1)
+    return sent[start:] if end == -1 else sent[start:end]
+
+
 def test_quickstart_answers_with_a_source_chip_that_finds_the_chart(page, serve):
     page.goto(serve('01'))
     open_panel(page)
@@ -155,7 +162,8 @@ def test_probe_reads_a_real_grid_filter_and_sort(page, serve):
     sent = what_was_sent(page)
     assert 'after the filter' in sent
     assert '"APAC"' in sent and 'Amount desc' in sent
-    table = sent[sent.index('| Order'):]
+    orders = section(sent, 'Tab: Orders')
+    table = orders[orders.index('| Order'):]
     assert 'EMEA' not in table and 'Americas' not in table and 'shipped' not in table, 'filtered rows must be gone'
     amounts = [int(line.split('|')[6]) for line in table.splitlines()[1:] if line.strip().startswith('|')]
     assert amounts == sorted(amounts, reverse=True), 'rows must arrive in the sort order on screen'
@@ -199,12 +207,42 @@ def test_real_plotly_figure_and_table_sort_are_read(page, serve):
     ask(page, 'What is the current sort?')
     sent = what_was_sent(page)
     assert 'Revenue descending' in sent
-    rows = [line for line in sent[sent.index('| Customer'):].splitlines()[1:] if line.strip().startswith('|')]
+    customers = section(sent, 'Tab: Customers')
+    rows = [line for line in customers[customers.index('| Customer'):].splitlines()[1:] if line.strip().startswith('|')]
     values = [int(row.split('|')[2]) for row in rows]
     assert values == sorted(values, reverse=True)
     # The table on screen must agree with what the assistant was told.
     on_screen = page.locator('.q-table tbody tr').first.locator('td').first.inner_text()
     assert on_screen == rows[0].split('|')[1].strip()
+
+
+def test_other_tabs_are_read_with_the_filters_left_on_them_and_a_source_opens_its_tab(page, serve):
+    page.goto(serve('02'))
+    # The user filters the grid on the Orders tab, then goes back to Overview.
+    page.get_by_role('tab', name='Orders').click()
+    page.locator('.ag-root').wait_for()
+    page.locator('.nicegui-aggrid').evaluate("""(element) => {
+        getElement(element).api.setFilterModel({region: {filterType: 'text', type: 'equals', filter: 'APAC'}});
+    }""")
+    page.get_by_role('tab', name='Overview').click()
+    page.wait_for_timeout(600)
+    open_panel(page)
+    answer = ask(page, 'Which customer brings in the most revenue?')
+    assert 'on the Customers tab' in answer
+    sent = what_was_sent(page)
+    orders = section(sent, 'Tab: Orders')
+    assert '(not visible: inactive tab)' in orders
+    assert '80 of 240 rows after the filter' in orders, 'the grid keeps its filter after the user leaves its tab'
+    table = orders[orders.index('| Order'):]
+    assert 'EMEA' not in table and 'Americas' not in table
+    assert 'Revenue by customer' in section(sent, 'Tab: Customers'), 'a tab never opened is read too'
+    assert 'did not report' not in sent
+
+    # The source is on the Customers tab, which the user never opened. Its chip opens it.
+    page.locator('[data-glimpse=panel] .source').first.click()
+    page.locator('.q-table').wait_for()
+    assert page.get_by_role('tab', name='Customers').get_attribute('aria-selected') == 'true'
+    assert [error for error in page.errors if 'Resize must be passed a displayed plot' not in error] == []
 
 
 def test_host_css_cannot_reach_the_panel_and_panel_css_cannot_reach_the_host(page, serve):

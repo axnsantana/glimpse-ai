@@ -20,6 +20,12 @@ class Detail:
     text: int = 2000
     cell: int = 200
     manifest_only: bool = False
+    off_screen: Detail | None = None
+    """The detail for entries the user cannot see now, such as another tab. None means the same as the rest."""
+
+    def for_element(self, element: ElementSnapshot) -> Detail:
+        """The detail to use for one element. A custom serializer can call this to put the screen first."""
+        return self.off_screen if self.off_screen is not None and element.hidden_reason else self
 
 
 LADDER = (
@@ -31,6 +37,10 @@ LADDER = (
 )
 
 Serializer = Callable[[PageContext, Detail], str]
+
+OFF_SCREEN_NOTE = ('Entries marked "not visible" are on this page but not on screen now, for example on another tab, '
+                   'and show what the user will see when they open it. When an answer uses one, tell the user where '
+                   'to find it.')
 
 
 def _clip(text: Any, limit: int) -> str:
@@ -46,7 +56,9 @@ def text_serializer(page: PageContext, detail: Detail) -> str:
     """The default format: compact plain text with an element ID on every entry."""
     lines = [f'Page: {_clip(page.title, 200) or "(untitled)"} ({page.url})']
     if page.visibility != 'visible':
-        lines.append(f'Visibility policy: {page.visibility}. Entries marked "not visible" are not on screen now.')
+        lines.append(f'Visibility policy: {page.visibility}.')
+    if any(element.hidden_reason for element in page.elements):
+        lines.append(OFF_SCREEN_NOTE)
     lines.extend(f'Capture note: {_clip(note, 400)}' for note in page.notes)
     if not page.elements:
         lines.append('No readable elements were found on this page.')
@@ -55,7 +67,7 @@ def text_serializer(page: PageContext, detail: Detail) -> str:
         if element.section != section:
             section = element.section
             lines.append(f'\n## {_clip(section, 120)}' if section else '')
-        lines.extend(_element_lines(element, detail))
+        lines.extend(_element_lines(element, detail.for_element(element)))
     return '\n'.join(lines)
 
 
@@ -187,25 +199,26 @@ def json_serializer(page: PageContext, detail: Detail) -> str:
     """An alternative format, as compact JSON. Pass serializer=glimpse.json_serializer to attach()."""
     elements = []
     for element in page.elements:
+        detail_here = detail.for_element(element)
         item: dict[str, Any] = {'id': element.id, 'kind': element.kind, 'label': element.label}
         for name in ('section', 'description', 'hidden_reason'):
             if getattr(element, name):
                 item[name] = getattr(element, name)
-        if element.text and not detail.manifest_only:
-            item['text'] = _clip(element.text, detail.text)
+        if element.text and not detail_here.manifest_only:
+            item['text'] = _clip(element.text, detail_here.text)
         if element.has_value:
             item['value'] = element.value
         if element.state:
             item['state'] = element.state
         if element.table:
-            rows = element.table.rows[: detail.rows]
+            rows = element.table.rows[: detail_here.rows]
             item['table'] = {'columns': element.table.columns, 'rows': rows, 'total_rows': len(element.table.rows),
                              'source_rows': element.table.source_rows}
             if len(rows) < len(element.table.rows):
                 item['table']['notice'] = (f'Showing {len(rows):,} of {len(element.table.rows):,} rows. '
                                            f'Call get_rows("{element.id}") for the rest.')
         if element.series is not None:
-            item['series'] = [_json_series(series, detail) for series in element.series if not series.hidden]
+            item['series'] = [_json_series(series, detail_here) for series in element.series if not series.hidden]
         elements.append(item)
     return json.dumps({'url': page.url, 'title': page.title, 'notes': page.notes, 'elements': elements}, default=str)
 

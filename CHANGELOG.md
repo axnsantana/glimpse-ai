@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- **Other tabs are read.** The assistant now reads the content of every tab, not only the selected one, because tabs usually split one view to save room. Entries on other tabs are marked as not on screen, and the model is told to say where it found an answer. Pass `read_inactive_tabs=False` to `attach()` to send only a summary of each tab, as before. Steps, carousel slides and collapsed sections are unchanged.
+- **Filters on other tabs carry over.** Grids and charts on other tabs are probed too. A grid the user filtered keeps its filter after they leave its tab, and the assistant sees the filtered rows. A tab the user has not opened yet is read from the server, which is what it will show.
+- **What is on screen keeps its detail.** When the page does not fit the budget, entries on other tabs give way first. `ContextReport.off_screen_detail_level` reports how far they fell, and `Detail.off_screen` lets a custom serializer do the same.
+- **Sources open their tab.** Clicking a source on another tab, or in a collapsed section, opens it and scrolls to the element. Before, the click did nothing.
+
 ## 0.2.0 (2026-11-10)
 
 - **NiceGUI 4.** Glimpse now supports NiceGUI 3.19 and 4. NiceGUI 4 needs Python 3.11, so on Python 3.10 pip keeps installing 3.19.

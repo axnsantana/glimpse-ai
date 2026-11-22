@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -115,9 +116,11 @@ class ElementSnapshot:
     readable: bool = True
     """False for widgets whose data cannot be read, such as a 3D scene."""
     hidden_reason: str = ''
-    """Why the user cannot see this now. Only set for stubs and reachable content."""
+    """Why the user cannot see this now, such as "inactive tab". Empty for what is on screen."""
     dom_id: str = ''
     """The browser element to scroll to when an answer cites this element."""
+    reveal: Callable[[], Any] | None = field(default=None, repr=False, compare=False)
+    """Brings the element on screen, for example by opening its tab. Set by the adapter when it can."""
 
 
 @dataclass
@@ -133,6 +136,8 @@ class ContextReport:
     question_tokens: int = 0
     context_tokens: int = 0
     detail_level: int = 0
+    off_screen_detail_level: int = 0
+    """The detail level of entries the user cannot see now, which give way first."""
     dropped_messages: int = 0
     truncated_page: bool = False
 

@@ -37,6 +37,7 @@ This is version 0.2, and these are the limits we know of.
 - **`ui.pyplot`** reads line data and titles only, not bars or scatter plots.
 - **Unusual ECharts or Plotly data shapes** may read as empty or partial, for example custom series. Check the inspector.
 - **Colour-based hiding**, such as white text on white, is not detected.
+- **Plotly on a tab with `keep_alive=False`.** After the user leaves the tab, Glimpse reads the chart unzoomed, because it is no longer mounted. Plotly may restore the old zoom when they come back. With the default `keep_alive=True` the zoom is read as it is.
 - **Non-Latin text** is read normally, but the offline demo engine only matches ASCII words.
 
 ## Conversations

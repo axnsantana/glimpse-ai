@@ -108,6 +108,34 @@ async def test_probe_replies_are_validated(user: User):
     assert chart.series[0].y == [1, 2, 3]
 
 
+def test_an_element_on_a_tab_the_user_has_not_opened_keeps_its_server_data_quietly():
+    """It is not mounted in the browser, and shows the server's data when the user opens the tab."""
+    from glimpse.adapters.nicegui.probe import apply_echart_state, apply_grid_state, apply_plotly_state
+
+    def table(hidden_reason: str = '') -> glimpse.ElementSnapshot:
+        return glimpse.ElementSnapshot(id='g', kind='table', hidden_reason=hidden_reason,
+                                       table=glimpse.TableData(columns=['a'], rows=[{'a': 1}, {'a': 2}]))
+
+    def chart(hidden_reason: str = '') -> glimpse.ElementSnapshot:
+        return glimpse.ElementSnapshot(id='c', kind='chart', hidden_reason=hidden_reason,
+                                       series=[glimpse.Series(name='S', y=[1, 2, 3])])
+
+    notes: list[str] = []
+    off_screen = table('inactive tab')
+    apply_grid_state(off_screen, {'unmounted': True}, notes)
+    apply_echart_state(chart('inactive tab'), {'unmounted': True}, 'category', notes)
+    apply_plotly_state(chart('inactive tab'), {'unmounted': True}, notes)
+    assert len(off_screen.table.rows) == 2 and notes == []
+
+    # On screen, a missing element means the probe failed, and the model must be told.
+    for apply in (lambda: apply_grid_state(table(), {'unmounted': True}, notes),
+                  lambda: apply_echart_state(chart(), {'unmounted': True}, 'category', notes),
+                  lambda: apply_plotly_state(chart(), {'unmounted': True}, notes)):
+        before = len(notes)
+        apply()
+        assert len(notes) == before + 1 and 'did not report' in notes[-1]
+
+
 async def test_payload_growth_over_a_long_session(user: User):
     """CopilotKit #1482, assistant-ui #1767: full history on every request until HTTP 413."""
     engine = RecordingEngine('word ' * 300)

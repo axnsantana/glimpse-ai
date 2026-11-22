@@ -68,7 +68,7 @@ class Turn:
             element = self.page.element(element_id)
             if element is not None:
                 sources.append({'id': element.id, 'label': _source_label(element), 'kind': element.kind,
-                                'dom': element.dom_id})
+                                'dom': element.dom_id, 'reveal': element.reveal is not None})
         return sources
 
     def view(self) -> dict[str, Any]:

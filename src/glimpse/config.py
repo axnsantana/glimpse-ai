@@ -30,6 +30,7 @@ class GlimpseConfig:
     context: str | Callable[[], str] = ''
     budget: int = 16000
     visibility: str = 'visible'
+    read_inactive_tabs: bool = True
     exclude_fields: Collection[Any] = ()
     redact: Callable[[str], str] | None = None
     serializer: Serializer = text_serializer
