@@ -5,8 +5,8 @@ needed to answer are in what the model would receive, or a tool call away. That 
 capture fidelity on its own (NFR-5), and it is what runs in CI.
 
 test_live_answers scores a real model on the same questions, and test_live_budget_holds checks
-real requests against the free token counting endpoint. The scoring spends about $0.35 on Claude
-Opus 5.5, so it only runs when asked for. Pass thresholds wait for spike S1, so it reports its score:
+real requests against the free token counting endpoint. The scoring sends about 143,000 input and
+5,600 output tokens to Claude Opus 5.5, so it only runs when asked for. Pass thresholds wait for spike S1, so it reports its score:
 
     GLIMPSE_EVAL_MODEL=anthropic:claude-opus-5-5 ANTHROPIC_API_KEY=... pytest -m live -s
 """
@@ -265,8 +265,8 @@ async def test_live_answers_from_other_sections():
     open_rows = [ALL[index] for index in OPEN]
     best_open, best_all = max(row['amount'] for row in open_rows), max(row['amount'] for row in ALL)
     assert best_open != best_all, 'the filter must change the answer'
-    # Each case: the app, what the browser reports, the question, what a right answer contains and must not contain,
-    # and where the answer is, which the model is asked to tell the user.
+    # Each case: the app, what the browser reports, the question, what the answer must state and must not state as
+    # the answer (the unfiltered value), and where the answer is, which the model is asked to tell the user.
     filtered = _grid_state(OPEN, {'status': {'filterType': 'text', 'type': 'equals', 'filter': 'open'}})
     apac = _grid_state(list(range(2, 30, 3)), {'region': {'filterType': 'text', 'type': 'equals', 'filter': 'APAC'}})
     cases = [
@@ -288,8 +288,13 @@ async def test_live_answers_from_other_sections():
             user.javascript_rules[PROBE_SCRIPT] = _browser_reply(user, *states)
             turn = await ask(panel, question, timeout=180)
             text = turn.text.replace(',', '')
-            good = (turn.status == 'done' and all(answer in text for answer in wanted)
-                    and not (wrong and re.search(rf'\b{wrong}\b', text)))
+            # A right answer states the filtered value first. It may then mention the unfiltered one, as in
+            # "60 of the 240 orders", but an answer that ignored the filter leads with it.
+            first_wanted = min((match.start() for answer in wanted for match in re.finditer(rf'\b{answer}\b', text)),
+                               default=None)
+            first_wrong = next((match.start() for match in re.finditer(rf'\b{wrong}\b', text)), None) if wrong else None
+            good = (turn.status == 'done' and all(re.search(rf'\b{answer}\b', text) for answer in wanted)
+                    and (first_wrong is None or (first_wanted is not None and first_wanted < first_wrong)))
             passed += good
             located += place.lower() in text.lower()
             print(f'{"PASS" if good else "FAIL"} {question}  want={wanted} not={wrong} names "{place}": '

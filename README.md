@@ -19,7 +19,7 @@ Users get a side panel where they can ask about what is on their screen. The ass
 
 ![Glimpse beside a sales dashboard. After the user filters the grid, the assistant reports the 21 orders on screen and the highest amount among them](https://raw.githubusercontent.com/axnsantana/glimpse-ai/main/docs/images/real-model-filtered-grid.png)
 
-> **Status: 0.2, an early MVP.** Capture, the panel and the security defaults are tested in a real browser. With Claude Opus 5.5, it answered all 26 reference questions correctly, in one run on a single dashboard with a simple scorer. That is a good early sign, not a full evaluation. See [known limits](https://github.com/axnsantana/glimpse-ai/blob/main/docs/known-limits.md).
+> **Status: 0.2, an early MVP.** Capture, the panel and the security defaults are tested in a real browser. With Claude Opus 5.5, it answered all 30 reference questions correctly, including 4 asked from one tab and answered from another, in one run on a single dashboard with a simple scorer. That is a good early sign, not a full evaluation. See [known limits](https://github.com/axnsantana/glimpse-ai/blob/main/docs/known-limits.md).
 
 ## Install
 
@@ -106,7 +106,7 @@ pytest -m e2e         # Real Chrome against the real examples
 ruff check src tests examples
 ```
 
-`pytest -m live` scores a real model on the reference question set (about $0.35 on Claude Opus 5.5) and checks real requests against the budget with the free token counting endpoint. See [tests/test_fidelity.py](https://github.com/axnsantana/glimpse-ai/blob/main/tests/test_fidelity.py).
+`pytest -m live` scores a real model on the reference question set (about 143,000 input and 5,600 output tokens on Claude Opus 5.5) and checks real requests against the budget with the free token counting endpoint. See [tests/test_fidelity.py](https://github.com/axnsantana/glimpse-ai/blob/main/tests/test_fidelity.py).
 
 ## License
 

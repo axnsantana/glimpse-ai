@@ -4,7 +4,7 @@ This is version 0.2, and these are the limits we know of.
 
 ## How far it has been tested
 
-**Tested with a real model.** Claude Opus 5.5 answered all 26 reference questions correctly, with a citation on each, for about $0.35. It also picked the right tools on a 20,000-row table, answered from a filter set only in the browser, flagged a prompt injection in a table cell, and declined an exfiltration request. Treat this as an early sign:
+**Tested with a real model.** Claude Opus 5.5 answered all 30 reference questions correctly, with a citation on each, using about 143,000 input and 5,600 output tokens. Four of them are asked from one tab and answered from another. In a separate run it answered 4 of 4 questions from a tab the user had left with a grid filter on it, a carousel slide not shown and a filtered grid in a collapsed expansion, and each answer said where the data was. It also picked the right tools on a 20,000-row table, answered from a filter set only in the browser, flagged a prompt injection in a table cell, and declined an exfiltration request. Treat this as an early sign:
 
 - It was one run, on one dashboard, with questions whose answers are mostly in the context.
 - The scorer only checks that the expected values appear in the answer.
