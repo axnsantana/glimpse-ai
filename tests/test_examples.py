@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+from collections.abc import Callable
 
 from .conftest import second_user
 from .helpers import ask, element_by_label, panel_of
@@ -59,24 +60,66 @@ async def test_02_reads_every_main_element_type_and_applied_state(open_example):
         assert 'thousands of EUR' in page.developer_context
 
 
-async def test_02_inactive_tabs_are_stubs_until_the_user_opens_them(open_example):
-    from nicegui import ElementFilter, ui
-
+async def test_02_other_tabs_are_read_and_marked_as_not_on_screen(open_example):
     async with open_example('02') as user:
         await user.open('/')
         panel = panel_of(user)
-        page = (await ask(panel, 'What is on this page?')).page
-        orders = element_by_label(page, 'Tab: Orders')
-        assert orders.hidden_reason == 'inactive tab' and orders.table is None
-        assert 'SO-1000' not in page.rendered
-
-        with user:
-            tabs = next(iter(ElementFilter(kind=ui.tabs)))
-        tabs.set_value('Orders')
         panel.session.config = _without_probe(panel.session.config)
-        page = (await ask(panel, 'What is on this page?')).page
+        turn = await ask(panel, 'Which customer brings in the most revenue?')
+        page = turn.page
+        grid = next(element for element in page.elements if element.table and len(element.table.rows) == 240)
+        assert grid.hidden_reason == 'inactive tab' and grid.section == 'Tab: Orders'
         assert 'SO-1000' in page.rendered
-        assert any(element.table and len(element.table.rows) == 240 for element in page.elements)
+        customers = element_by_label(page, 'Revenue by customer')
+        assert customers.hidden_reason == 'inactive tab' and len(customers.table.rows) == 8
+        assert element_by_label(page, 'Monthly revenue and cost').hidden_reason == ''
+        assert page.report.detail_level == 0, 'reading the other tabs costs the screen no detail'
+        # The offline demo answers from the other tab, says where it is, and its source opens that tab.
+        assert f'[ref:{customers.id}]' in turn.text and 'on the Customers tab' in turn.text
+        assert turn.view()['sources'][0]['reveal']
+
+
+def _probe_reply(user, grid_state: dict) -> Callable:
+    """A browser reply with the Orders grid in grid_state, and charts as the user left them."""
+    from nicegui import ElementFilter, ui
+
+    def reply(_match):
+        with user:
+            grid = next(iter(ElementFilter(kind=ui.aggrid)))
+            chart = next(iter(ElementFilter(kind=ui.echart)))
+            plot = next(iter(ElementFilter(kind=ui.plotly)))
+        return {'grids': {str(grid.id): grid_state}, 'echarts': {str(chart.id): {'zoom': None, 'legend': None}},
+                'plotlies': {str(plot.id): {'range': None, 'visible': [True]}}}
+
+    return reply
+
+
+async def test_02_a_grid_filter_left_on_another_tab_still_applies(open_example):
+    """A tab the user has opened stays mounted after they leave it, and keeps its grid filter."""
+    async with open_example('02') as user:
+        await user.open('/')
+        panel = panel_of(user)
+        user.javascript_rules[re.compile(r'[\s\S]*const out = \{grids')] = _probe_reply(user, {
+            'rows': [5, 2], 'total': 2, 'filter': {'region': {'filter': 'APAC'}}, 'quick': '',
+            'sort': [['amount', 'desc']], 'displayed': [], 'selected': [], 'selected_count': 0,
+        })
+        page = (await ask(panel, 'How many orders are there?')).page
+        grid = next(element for element in page.elements if element.section == 'Tab: Orders' and element.table)
+        assert grid.hidden_reason == 'inactive tab'
+        assert len(grid.table.rows) == 2 and grid.state['filter'] == {'region': {'filter': 'APAC'}}
+        assert 'SO-1005' in page.rendered and 'SO-1100' not in page.rendered
+        assert page.notes == []
+
+
+async def test_02_a_tab_never_opened_shows_its_server_data_with_no_warning(open_example):
+    async with open_example('02') as user:
+        await user.open('/')
+        panel = panel_of(user)
+        user.javascript_rules[re.compile(r'[\s\S]*const out = \{grids')] = _probe_reply(user, {'unmounted': True})
+        page = (await ask(panel, 'How many orders are there?')).page
+        grid = next(element for element in page.elements if element.section == 'Tab: Orders' and element.table)
+        assert len(grid.table.rows) == 240
+        assert page.notes == [], 'the server copy is what the user will see when they open the tab'
 
 
 def _without_probe(config):

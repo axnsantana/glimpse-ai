@@ -12,7 +12,7 @@ The repository is private for now, and these are the steps to make it public, in
    Both should print nothing. Rotate any key that appears, and rewrite the history before going on.
 2. **Run every test:** `pytest`, `pytest -m e2e` and, if the prompt or tools changed, `pytest -m live -s`.
 3. **Check the NiceGUI advisories** with the command in [security.md](security.md), and raise the minimum version if a new one applies.
-4. **Update the numbers on `site/index.html`** if they changed: the test counts, the 26 of 26 result, and the example answers.
+4. **Update the numbers on `site/index.html`** if they changed: the test counts, the 30 of 30 result, and the example answers.
 5. **Check the PyPI tokens.** The release workflow uses trusted publishing and needs no token, so revoke the account-wide token used for the first upload. See [releasing.md](releasing.md).
 
 ## Make it public

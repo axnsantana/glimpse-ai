@@ -5,8 +5,8 @@ needed to answer are in what the model would receive, or a tool call away. That 
 capture fidelity on its own (NFR-5), and it is what runs in CI.
 
 test_live_answers scores a real model on the same questions, and test_live_budget_holds checks
-real requests against the free token counting endpoint. The scoring spends about $0.35 on Claude
-Opus 5.5, so it only runs when asked for. Pass thresholds wait for spike S1, so it reports its score:
+real requests against the free token counting endpoint. The scoring sends about 143,000 input and
+5,600 output tokens to Claude Opus 5.5, so it only runs when asked for. Pass thresholds wait for spike S1, so it reports its score:
 
     GLIMPSE_EVAL_MODEL=anthropic:claude-opus-5-5 ANTHROPIC_API_KEY=... pytest -m live -s
 """
@@ -113,12 +113,17 @@ CASES = [
     Case('Which tab am I on?', 'filtered', ('Tabs" = Customers',), tab='Customers'),
     Case('How many orders does the grid show for this region?', 'filtered', (f'of {len(EMEA)} rows',), region='EMEA',
          tab='Orders'),
+    # Asked from one tab, answered from another.
+    Case('What is the revenue of customer Hooli?', 'other tab', (str(CUSTOMER['Hooli']),)),
+    Case('What is the amount of order SO-1000?', 'other tab', (str(ALL[0]['amount']),)),
+    Case('Which customer brings in the most revenue?', 'other tab', (top(CUSTOMER), str(CUSTOMER[top(CUSTOMER)]))),
+    Case('Which product sells the most?', 'other tab', (top(PRODUCT), str(PRODUCT[top(PRODUCT)])), tab='Customers'),
 ]
 
 
 def test_question_set_covers_the_categories_the_spike_asks_for():
     categories = {case.category for case in CASES}
-    assert categories == {'value', 'trend', 'comparison', 'filtered'}
+    assert categories == {'value', 'trend', 'comparison', 'filtered', 'other tab'}
     assert 20 <= len(CASES) <= 30
 
 
@@ -222,6 +227,80 @@ async def test_live_answers():
     print(f'tokens: {input_tokens} in, {output_tokens} out')
     if ratios:
         print(f'estimate / actual input tokens: min {min(ratios):.2f}, max {max(ratios):.2f}')
+
+
+PROBE_SCRIPT = re.compile(r'[\s\S]*const out = \{grids')
+OPEN = [index for index, row in enumerate(ALL) if row['status'] == 'open']
+SECTIONS_APP = EXAMPLES.parent / 'tests' / 'e2e' / 'sections_app.py'
+
+
+def _browser_reply(user, *grid_states: dict):
+    """The probe's reply: each grid in page order gets a state, and charts are as the server has them."""
+    def reply(_match):
+        with user:
+            grids = list(ElementFilter(kind=ui.aggrid))
+            charts = list(ElementFilter(kind=ui.echart))
+            plots = list(ElementFilter(kind=ui.plotly))
+        return {'grids': {str(grid.id): state for grid, state in zip(grids, grid_states, strict=True)},
+                'echarts': {str(chart.id): {'zoom': None, 'legend': None} for chart in charts},
+                'plotlies': {str(plot.id): {'range': None, 'visible': [True]} for plot in plots}}
+
+    return reply
+
+
+def _grid_state(rows: list[int], filter_model: dict) -> dict:
+    return {'rows': rows, 'total': len(rows), 'filter': filter_model, 'quick': '', 'sort': [], 'displayed': [],
+            'selected': [], 'selected_count': 0}
+
+
+@pytest.mark.live
+@pytest.mark.timeout(900)
+async def test_live_answers_from_other_sections():
+    """Questions asked from one part of the page, answered from a tab, slide or section the user cannot see now."""
+    from nicegui.testing.user_simulation import user_simulation
+
+    model = os.environ.get('GLIMPSE_EVAL_MODEL')
+    if not model:
+        pytest.skip('Set GLIMPSE_EVAL_MODEL to run this.')
+    open_rows = [ALL[index] for index in OPEN]
+    best_open, best_all = max(row['amount'] for row in open_rows), max(row['amount'] for row in ALL)
+    assert best_open != best_all, 'the filter must change the answer'
+    # Each case: the app, what the browser reports, the question, what the answer must state and must not state as
+    # the answer (the unfiltered value), and where the answer is, which the model is asked to tell the user.
+    filtered = _grid_state(OPEN, {'status': {'filterType': 'text', 'type': 'equals', 'filter': 'open'}})
+    apac = _grid_state(list(range(2, 30, 3)), {'region': {'filterType': 'text', 'type': 'equals', 'filter': 'APAC'}})
+    cases = [
+        (EXAMPLES / '02_sales_dashboard.py', (filtered,), 'What is the highest amount in the Orders grid?',
+         [str(best_open)], str(best_all), 'Orders'),
+        (EXAMPLES / '02_sales_dashboard.py', (filtered,), 'How many orders does the Orders grid show?',
+         [str(len(OPEN))], '240', 'Orders'),
+        (SECTIONS_APP, ({'unmounted': True}, apac), 'Which team has the highest headcount?', ['Dev', '17'], None,
+         'Team'),
+        (SECTIONS_APP, ({'unmounted': True}, apac), 'How many orders does the order details grid show?', ['10'], '30',
+         'Order details'),
+    ]
+    passed = located = 0
+    for main_file, states, question, wanted, wrong, place in cases:
+        async with user_simulation(main_file=main_file) as user:
+            await user.open('/')
+            panel = panel_of(user)
+            panel.session.engine = glimpse.DirectEngine(model)
+            user.javascript_rules[PROBE_SCRIPT] = _browser_reply(user, *states)
+            turn = await ask(panel, question, timeout=180)
+            text = turn.text.replace(',', '')
+            # A right answer states the filtered value first. It may then mention the unfiltered one, as in
+            # "60 of the 240 orders", but an answer that ignored the filter leads with it.
+            first_wanted = min((match.start() for answer in wanted for match in re.finditer(rf'\b{answer}\b', text)),
+                               default=None)
+            first_wrong = next((match.start() for match in re.finditer(rf'\b{wrong}\b', text)), None) if wrong else None
+            good = (turn.status == 'done' and all(re.search(rf'\b{answer}\b', text) for answer in wanted)
+                    and (first_wrong is None or (first_wanted is not None and first_wanted < first_wrong)))
+            passed += good
+            located += place.lower() in text.lower()
+            print(f'{"PASS" if good else "FAIL"} {question}  want={wanted} not={wrong} names "{place}": '
+                  f'{place.lower() in text.lower()} tools={[call["name"] for call in turn.tool_calls]} '
+                  f'notes={turn.page.notes}\n     {turn.text[:300]!r}', flush=True)
+    print(f'other sections: {passed}/{len(cases)}, answers that say where: {located}/{len(cases)}')
 
 
 @pytest.mark.live

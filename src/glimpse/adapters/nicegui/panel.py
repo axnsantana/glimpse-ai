@@ -43,12 +43,20 @@ class GlimpsePanel(Element, component='panel.js'):
         self.on('glimpse_cancel', lambda _: self.session.cancel())
         self.on('glimpse_clear', lambda _: self._clear())
         self.on('glimpse_inspect', lambda event: self._inspect(event.args.get('id')))
+        self.on('glimpse_reveal', lambda event: self.reveal(event.args.get('turn'), event.args.get('id')))
         # The stream stops when the client is gone for good, not on a brief reconnect (NFR-2).
         client.on_delete(self.session.cancel)
 
     def ask(self, question: str) -> Any:
         """Ask a question, as if the user had typed it. Returns the task answering it."""
         return self.session.ask(question)
+
+    def reveal(self, turn_id: Any, element_id: Any) -> None:
+        """Bring a source the user clicked on screen, for example by opening its tab. The browser then scrolls to it."""
+        turn = next((turn for turn in self.session.turns if turn.id == turn_id), None)
+        element = turn.page.element(str(element_id)) if turn and turn.page else None
+        if element is not None and element.reveal is not None:
+            element.reveal()
 
     def _send_turn(self, turn: Turn) -> None:
         if not self.is_deleted:

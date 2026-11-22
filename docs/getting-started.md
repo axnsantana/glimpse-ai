@@ -1,6 +1,6 @@
 # Getting started
 
-Glimpse adds an assistant in a side panel to a NiceGUI app. It answers questions about what the user sees on the page, including filters, selected tabs and chart zoom, with no annotations in your code.
+Glimpse adds an assistant in a side panel to a NiceGUI app. It answers questions about what the user sees on the page, including filters, chart zoom, and the content of other tabs and collapsed sections, with no annotations in your code.
 
 ## Install
 
@@ -60,6 +60,7 @@ Under each answer, open **What the assistant saw**. It shows exactly what was se
 | `redact=` | A function run on every string before it can leave the process |
 | `budget=` | The most tokens one request may use. The default is 16,000 |
 | `visibility=` | `"visible"` (the default) or `"reachable"`. See [visibility-policy.md](visibility-policy.md) |
+| `read_inactive_sections=False` | Send a summary of each inactive tab, carousel slide and collapsed expansion, instead of its content |
 | `suggestions=` | Starter questions shown in an empty conversation |
 | `on_usage=`, `pricing=`, `max_session_tokens=`, `max_session_cost=` | Track and limit spending |
 | `system_prompt=` | Replaces the built-in system prompt exactly |

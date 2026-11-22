@@ -6,6 +6,10 @@ browser can only change what its own user's assistant is told about row order.
 
 If the probe fails, the page is still captured from the server, and the context says so. A
 silent failure here would produce confident answers about rows the user has filtered out.
+
+Elements on other tabs are probed too. A tab the user has opened stays mounted, with its
+filters, after they leave it. One they have not opened is not mounted, and shows the
+server's data when they do, so for those the server's copy is the view.
 """
 
 from __future__ import annotations
@@ -26,10 +30,14 @@ MAX_INDICES = 50_000
 MAX_SELECTED = 20
 
 _SCRIPT = r'''
-const safe = (read) => { try { return read(); } catch (error) { return {error: String(error)}; } };
+const read = (id, reader) => {
+  const element = getElement(id);
+  if (!element) return {unmounted: true};
+  try { return reader(element); } catch (error) { return {error: String(error)}; }
+};
 const out = {grids: {}, echarts: {}, plotlies: {}};
-for (const id of %(grids)s) out.grids[id] = safe(() => {
-  const api = getElement(id).api;
+for (const id of %(grids)s) out.grids[id] = read(id, (element) => {
+  const api = element.api;
   const rows = [];
   let total = 0;
   api.forEachNodeAfterFilterAndSort((node) => {
@@ -51,16 +59,16 @@ for (const id of %(grids)s) out.grids[id] = safe(() => {
     page_size: paginated ? api.paginationGetPageSize() : null,
   };
 });
-for (const id of %(echarts)s) out.echarts[id] = safe(() => {
-  const option = getElement(id).chart.getOption();
+for (const id of %(echarts)s) out.echarts[id] = read(id, (element) => {
+  const option = element.chart.getOption();
   const zoom = (option.dataZoom || [])[0];
   return {
     zoom: zoom ? {start: zoom.start, end: zoom.end, startValue: zoom.startValue, endValue: zoom.endValue} : null,
     legend: option.legend && option.legend[0] ? option.legend[0].selected : null,
   };
 });
-for (const id of %(plotlies)s) out.plotlies[id] = safe(() => {
-  const plot = getElement(id).$el;
+for (const id of %(plotlies)s) out.plotlies[id] = read(id, (element) => {
+  const plot = element.$el;
   const axis = plot.layout.xaxis || {};
   return {range: axis.autorange ? null : axis.range, visible: plot.data.map((t) => t.visible === undefined ? true : t.visible)};
 });
@@ -119,11 +127,20 @@ def _element_note(snapshot: ElementSnapshot) -> str:
             'hidden.')
 
 
+def _shows_server_data(snapshot: ElementSnapshot, state: dict) -> bool:
+    """Off screen and not mounted, such as on a tab the user has not opened: it will show the server's data."""
+    return bool(state.get('unmounted')) and bool(snapshot.hidden_reason)
+
+
+def _failed(state: dict) -> bool:
+    return 'error' in state or bool(state.get('unmounted'))
+
+
 def apply_grid_state(snapshot: ElementSnapshot, state: dict, notes: list[str]) -> None:
     table = snapshot.table
-    if table is None:
+    if table is None or _shows_server_data(snapshot, state):
         return
-    if 'error' in state or not isinstance(state.get('rows'), list):
+    if _failed(state) or not isinstance(state.get('rows'), list):
         notes.append(_element_note(snapshot))
         return
     source = table.rows
@@ -157,9 +174,9 @@ def apply_grid_state(snapshot: ElementSnapshot, state: dict, notes: list[str]) -
 
 
 def apply_echart_state(snapshot: ElementSnapshot, state: dict, axis_type: str, notes: list[str]) -> None:
-    if snapshot.series is None:
+    if snapshot.series is None or _shows_server_data(snapshot, state):
         return
-    if 'error' in state:
+    if _failed(state):
         notes.append(_element_note(snapshot))
         return
     legend = state.get('legend')
@@ -216,9 +233,9 @@ def _all_numbers(values: list[Any]) -> bool:
 
 
 def apply_plotly_state(snapshot: ElementSnapshot, state: dict, notes: list[str]) -> None:
-    if snapshot.series is None:
+    if snapshot.series is None or _shows_server_data(snapshot, state):
         return
-    if 'error' in state:
+    if _failed(state):
         notes.append(_element_note(snapshot))
         return
     visible = state.get('visible')

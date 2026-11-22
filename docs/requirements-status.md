@@ -18,7 +18,7 @@ Claude Opus 5.5 has been run live on Anthropic's API. No other provider has, inc
 | CAP-4 | SHOULD | Done | `test_snapshot_is_built_when_the_user_asks_not_before` |
 | CAP-5 | SHOULD, prov. | Done | `test_probe_reads_real_chart_zoom_and_legend` (e2e). Spike S1's formal bake-off against DOM and screenshots was not run |
 | CAP-6 | SHOULD | Done | `[kind-id]` on each entry, or your own with `describe(id=)` |
-| CAP-7 | MUST | Done | [visibility-policy.md](visibility-policy.md), `test_visibility_policy_*` |
+| CAP-7 | MUST | Done | [visibility-policy.md](visibility-policy.md), `test_visibility_policy_*`, `test_inactive_tabs_are_read_by_default_and_marked_as_not_on_screen`, `test_collapsed_expansions_and_carousel_slides_are_read_by_default_too`, `test_carousels_and_collapsed_sections_are_read_and_their_sources_open_them` (e2e), `test_other_tabs_are_read_with_the_filters_left_on_them_and_a_source_opens_its_tab` (e2e) |
 | CAP-8 | MAY | Not done | Screenshots. Unreadable widgets say so instead |
 | CAP-9 | SHOULD | Done | `serializer=`, `json_serializer` |
 
@@ -42,7 +42,7 @@ Claude Opus 5.5 has been run live on Anthropic's API. No other provider has, inc
 | UI-4 | MUST | Done | `test_stop_button_cancels_the_stream_and_closes_the_engine` (e2e), `test_progress_heartbeat_during_silence` |
 | UI-5 | SHOULD | Done | The same e2e test, and the engine's `finally` runs |
 | UI-6 | SHOULD | Done | "What the assistant saw", used by most e2e tests |
-| UI-7 | SHOULD | Done, lightly tested | Source chips work and cited IDs are checked against the snapshot. All 26 live answers cited a source. Saying "not on this page" comes from the system prompt, and was seen on a real model but not measured at scale |
+| UI-7 | SHOULD | Done, lightly tested | Source chips work and cited IDs are checked against the snapshot. All 30 live answers cited a source. Saying "not on this page" comes from the system prompt, and was seen on a real model but not measured at scale |
 
 ## Developer integration
 
@@ -91,7 +91,7 @@ Claude Opus 5.5 has been run live on Anthropic's API. No other provider has, inc
 | NFR-2 | SHOULD | Partial | Heartbeats, cancel on close and a reconnect test exist. **Not tested behind nginx** |
 | NFR-3 | MUST | Done | `test_concurrent_sessions_*` |
 | NFR-4 | SHOULD, prov. | Partial | `test_snapshot_does_not_block_the_event_loop` applies a smoke limit on 300,000 rows. Numeric targets wait for S1 |
-| NFR-5 | SHOULD, prov. | Partial | 26 questions in `test_fidelity.py`. Whether the facts reach the model is tested in every run. Claude Opus 5.5 scored 26/26 live, in one run with a simple substring scorer and the probe off. Pass thresholds wait for spike S1 |
+| NFR-5 | SHOULD, prov. | Partial | 30 questions in `test_fidelity.py`, plus 4 live questions about other tabs, slides and collapsed sections. Whether the facts reach the model is tested in every run. Claude Opus 5.5 scored 30/30 live, and 4/4 on the other-section questions, in one run with a simple substring scorer and the probe off. Pass thresholds wait for spike S1 |
 | NFR-6 | SHOULD | Done | `test_only_the_adapter_mentions_nicegui` |
 | NFR-7 | SHOULD | Done | [nicegui-internals.md](nicegui-internals.md), `test_private_nicegui_attributes_only_appear_in_compat` |
 | NFR-8 | MUST | Done | `docs/` |

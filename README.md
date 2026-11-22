@@ -15,11 +15,11 @@ def dashboard():
 ui.run()
 ```
 
-Users get a side panel where they can ask about what is on their screen. The assistant reads the live page when they ask, including their filters, sort order, selected tab and chart zoom. You do not annotate anything or pass it any data.
+Users get a side panel where they can ask about what is on their screen. The assistant reads the live page when they ask, including their filters, sort order and chart zoom, and what is on other tabs or in collapsed sections. You do not annotate anything or pass it any data.
 
 ![Glimpse beside a sales dashboard. After the user filters the grid, the assistant reports the 21 orders on screen and the highest amount among them](https://raw.githubusercontent.com/axnsantana/glimpse-ai/main/docs/images/real-model-filtered-grid.png)
 
-> **Status: 0.2, an early MVP.** Capture, the panel and the security defaults are tested in a real browser. With Claude Opus 5.5, it answered all 26 reference questions correctly, in one run on a single dashboard with a simple scorer. That is a good early sign, not a full evaluation. See [known limits](https://github.com/axnsantana/glimpse-ai/blob/main/docs/known-limits.md).
+> **Status: 0.2, an early MVP.** Capture, the panel and the security defaults are tested in a real browser. With Claude Opus 5.5, it answered all 30 reference questions correctly, including 4 asked from one tab and answered from another, in one run on a single dashboard with a simple scorer. That is a good early sign, not a full evaluation. See [known limits](https://github.com/axnsantana/glimpse-ai/blob/main/docs/known-limits.md).
 
 ## Install
 
@@ -65,7 +65,7 @@ Passing data to a chat function by hand works until users start filtering. Then 
 
 | | |
 |---|---|
-| **Sees the applied view** | Grid filters and sort, chart zoom and hidden series, table sort, inputs and tabs |
+| **Sees the applied view** | Grid filters and sort, chart zoom and hidden series, table sort and inputs, on the current tab and in other tabs, slides and collapsed sections |
 | **Stays inside a budget** | Large tables and series become statistics computed in Python, plus a visible "Showing 50 of 12,000 rows" and read-only tools to fetch more |
 | **Shows its work** | "What the assistant saw" under each answer, and sources that scroll to the element used |
 | **Safe by default** | Passwords withheld, hidden text ignored, images and external links in answers disabled, sessions isolated |
@@ -106,7 +106,7 @@ pytest -m e2e         # Real Chrome against the real examples
 ruff check src tests examples
 ```
 
-`pytest -m live` scores a real model on the reference question set (about $0.35 on Claude Opus 5.5) and checks real requests against the budget with the free token counting endpoint. See [tests/test_fidelity.py](https://github.com/axnsantana/glimpse-ai/blob/main/tests/test_fidelity.py).
+`pytest -m live` scores a real model on the reference question set (about 143,000 input and 5,600 output tokens on Claude Opus 5.5) and checks real requests against the budget with the free token counting endpoint. See [tests/test_fidelity.py](https://github.com/axnsantana/glimpse-ai/blob/main/tests/test_fidelity.py).
 
 ## License
 

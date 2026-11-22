@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import json
 import random
+from itertools import pairwise
 
 import pytest
 
 from glimpse import ElementSnapshot, GlimpseConfig, Message, PageContext, Series, TableData
-from glimpse.builder import prepare_request
+from glimpse.builder import OFF_SCREEN_FLOOR, detail_steps, prepare_request
 from glimpse.engine import EngineError
 from glimpse.prompt import escape_fences, user_turn
 from glimpse.serialize import LADDER, text_serializer
@@ -106,6 +107,37 @@ def test_detail_falls_gradually_as_the_budget_tightens():
         levels.append(page.report.detail_level)
     assert levels == sorted(levels)
     assert levels[0] == 0 and levels[-1] > 0
+
+
+def test_what_is_off_screen_gives_way_before_what_is_on_screen():
+    def page() -> PageContext:
+        other_tab = big_table()
+        other_tab.id, other_tab.hidden_reason, other_tab.section = 'table-2', 'inactive tab', 'Tab: Archive'
+        return PageContext(elements=[big_table(), other_tab])
+
+    roomy = prepare_request(page(), [], 'q', GlimpseConfig(budget=100000))[1]
+    assert (roomy.report.detail_level, roomy.report.off_screen_detail_level) == (0, 0)
+
+    tight = prepare_request(page(), [], 'q', GlimpseConfig(budget=3000))[1]
+    assert tight.report.detail_level == 0 and tight.report.off_screen_detail_level > 0
+    on_screen, off_screen = tight.rendered.split('## Tab: Archive')
+    assert 'Showing 50 of 12,000 rows' in on_screen
+    assert 'Showing 50 of' not in off_screen and 'get_rows("table-2")' in off_screen
+    assert 'Column statistics' in off_screen
+
+    tighter = prepare_request(page(), [], 'q', GlimpseConfig(budget=2000))[1].report
+    assert tighter.detail_level > 0 and tighter.off_screen_detail_level == OFF_SCREEN_FLOOR, \
+        'the screen loses rows only once off screen is down to statistics'
+
+
+def test_detail_steps_only_split_when_something_is_off_screen():
+    plain = detail_steps(PageContext(elements=[big_table()]))
+    assert [(on, off) for on, off, _ in plain] == [(level, level) for level in range(len(LADDER))]
+    mixed = detail_steps(PageContext(elements=[big_table(), ElementSnapshot(id='x', kind='text', hidden_reason='tab')]))
+    pairs = [(on, off) for on, off, _ in mixed]
+    assert pairs[:OFF_SCREEN_FLOOR + 1] == [(0, level) for level in range(OFF_SCREEN_FLOOR + 1)]
+    assert pairs[-1] == (len(LADDER) - 1, len(LADDER) - 1)
+    assert all(a <= c and b <= d for (a, b), (c, d) in pairwise(pairs)), 'detail never comes back'
 
 
 def test_manifest_level_still_names_every_element():

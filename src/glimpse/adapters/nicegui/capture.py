@@ -7,6 +7,7 @@ counts as seen.
 
 from __future__ import annotations
 
+import functools
 import logging
 from collections.abc import Collection
 from types import MappingProxyType
@@ -28,6 +29,10 @@ DATA_CLASSES = MappingProxyType({'AgGrid': 'table', 'Table': 'table', 'EChart': 
                                  'Pyplot': 'chart'})
 
 
+RevealStep = tuple[int, Any]
+"""An element ID, and the value that shows what is inside it: a tab, step or slide name, or True for an expansion."""
+
+
 def get_meta(element: Element) -> dict[str, Any]:
     return getattr(element, META_ATTRIBUTE, {})
 
@@ -37,29 +42,31 @@ def _call_if_callable(value: Any) -> Any:
 
 
 class Walker:
-    def __init__(self, exclude_fields: Collection[Any], visibility: str) -> None:
+    def __init__(self, exclude_fields: Collection[Any], visibility: str, read_inactive_sections: bool = True) -> None:
         self.exclude_fields = exclude_fields
         self.visibility = visibility
+        self.read_inactive_sections = read_inactive_sections
         self.elements: list[ElementSnapshot] = []
         self.notes: list[str] = []
         self.withheld = 0
         self.grids: list[tuple[Element, ElementSnapshot]] = []
         self.echarts: list[tuple[Element, ElementSnapshot, str]] = []
         self.plotlies: list[tuple[Element, ElementSnapshot]] = []
-        self._hidden_reason = ''
+        self.reveals: list[tuple[ElementSnapshot, tuple[RevealStep, ...]]] = []
+        """Snapshots off screen, with the steps that bring each on screen, outermost first."""
+        self._path: list[RevealStep | None] = []
+        """The hidden containers around the current element. None is one a source cannot open, such as a dialog."""
 
-    # Extractors register what needs a browser probe. Only elements on screen are mounted.
+    # Extractors register what needs a browser probe. Elements off screen are probed too: a tab the
+    # user has opened, or a collapsed expansion, stays mounted in the page with its filters.
     def probe_grid(self, element: Element, snapshot: ElementSnapshot) -> None:
-        if not self._hidden_reason:
-            self.grids.append((element, snapshot))
+        self.grids.append((element, snapshot))
 
     def probe_echart(self, element: Element, snapshot: ElementSnapshot, axis_type: str) -> None:
-        if not self._hidden_reason:
-            self.echarts.append((element, snapshot, axis_type))
+        self.echarts.append((element, snapshot, axis_type))
 
     def probe_plotly(self, element: Element, snapshot: ElementSnapshot) -> None:
-        if not self._hidden_reason:
-            self.plotlies.append((element, snapshot))
+        self.plotlies.append((element, snapshot))
 
     def walk(self, element: Element, section: str = '') -> None:
         names = _compat.class_names(element)
@@ -72,18 +79,23 @@ class Walker:
         if not element.visible or extractors.is_css_hidden(_compat.classes_of(element), _compat.styles_of(element)):
             return
 
+        # Tabs, slides and expansions usually fold one view to save room, so their content is part of the page.
+        # A later step is often a stage the user has not reached, so steps are read only when "reachable".
         if 'TabPanels' in names:
-            self._switching_children(element, section, 'TabPanel', 'Tab', 'inactive tab')
+            self._switching_children(element, section, 'TabPanel', 'Tab', 'inactive tab',
+                                     read=self.read_inactive_sections)
         elif 'Stepper' in names:
             self._switching_children(element, section, 'Step', 'Step', 'inactive step')
         elif 'Carousel' in names:
-            self._switching_children(element, section, 'CarouselSlide', 'Slide', 'inactive slide')
+            self._switching_children(element, section, 'CarouselSlide', 'Slide', 'inactive slide',
+                                     read=self.read_inactive_sections)
         elif 'Expansion' in names:
             title = str(getattr(element, 'text', '') or '')
             if element.value:
                 self._children(element, _join(section, f'Expansion: {title}'))
             else:
-                self._hidden(element, section, f'Expansion: {title}', 'collapsed', stub=True)
+                self._hidden(element, section, f'Expansion: {title}', 'collapsed', stub=True,
+                             read=self.read_inactive_sections, step=(element.id, True))
         elif 'Dialog' in names or 'Menu' in names or 'Popup' in names:
             kind = next(name for name in names if name in ('Dialog', 'Menu', 'Popup'))
             if element.value:
@@ -103,7 +115,9 @@ class Walker:
         else:
             self._content(element, names, section, meta)
 
-    def _switching_children(self, element: Element, section: str, child_class: str, label: str, reason: str) -> None:
+    def _switching_children(
+        self, element: Element, section: str, child_class: str, label: str, reason: str, *, read: bool = False,
+    ) -> None:
         value = element.value
         active = _compat.props_of(value).get('name') if isinstance(value, Element) else value
         for child in _compat.children_of(element):
@@ -115,24 +129,33 @@ class Walker:
             if name == active:
                 self._children(child, _join(section, title))
             else:
-                self._hidden(child, section, title, reason, stub=True)
+                self._hidden(child, section, title, reason, stub=True, read=read, step=(element.id, name))
 
-    def _hidden(self, element: Element, section: str, title: str, reason: str, *, stub: bool) -> None:
+    def _hidden(
+        self, element: Element, section: str, title: str, reason: str, *, stub: bool, read: bool = False,
+        step: RevealStep | None = None,
+    ) -> None:
         """Content the user cannot see now. A stub says it exists, so that answers can point there."""
-        if self.visibility == 'reachable':
-            outer = self._hidden_reason
-            self._hidden_reason = reason
+        self._path.append(step)
+        if read or self.visibility == 'reachable':
             start = len(self.elements)
             self._children(element, _join(section, title))
             for snapshot in self.elements[start:]:
-                snapshot.hidden_reason = reason
-            self._hidden_reason = outer
+                # The innermost reason is the one that hides it. Its section names the containers around it.
+                snapshot.hidden_reason = snapshot.hidden_reason or reason
         elif stub:
             contains = self._contains(element)
-            self.elements.append(ElementSnapshot(
+            self._add(ElementSnapshot(
                 id=f'section-{element.id}', kind='section', label=title, hidden_reason=reason, section=section,
                 description=f'Contains {contains}.' if contains else '', dom_id=element.html_id,
             ))
+        self._path.pop()
+
+    def _add(self, snapshot: ElementSnapshot) -> None:
+        self.elements.append(snapshot)
+        steps = tuple(step for step in self._path if step is not None)
+        if self._path and len(steps) == len(self._path):
+            self.reveals.append((snapshot, steps))
 
     @staticmethod
     def _contains(element: Element) -> str:
@@ -156,7 +179,7 @@ class Walker:
         if snapshot is not None:
             snapshot.section = section
             self._apply_meta(snapshot, meta)
-            self.elements.append(snapshot)
+            self._add(snapshot)
         if extractor is None or extractor.descend:
             self._children(element, section)
 
@@ -175,10 +198,21 @@ def _join(section: str, title: str) -> str:
     return f'{section} > {title}' if section else title
 
 
+def reveal(client: Client, steps: tuple[RevealStep, ...]) -> None:
+    """Open the tabs and sections around an element, outermost first, as the user would by clicking them."""
+    for element_id, value in steps:
+        element = client.elements.get(element_id)
+        if element is None:
+            return
+        element.value = value
+
+
 async def capture_page(client: Client, config: GlimpseConfig) -> PageContext:
     """Read this client's page. Walks on the event loop, which is quick as data is only referenced."""
-    walker = Walker(config.exclude_fields, config.visibility)
+    walker = Walker(config.exclude_fields, config.visibility, config.read_inactive_sections)
     walker.walk(client.layout)
+    for snapshot, steps in walker.reveals:
+        snapshot.reveal = functools.partial(reveal, client, steps)
     page = PageContext(
         url=_compat.page_url(client),
         title=str(client.resolve_title() or ''),

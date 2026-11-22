@@ -89,10 +89,30 @@ def _overview(page: PageContext) -> str:
     return '\n'.join(lines)
 
 
+OFF_SCREEN_PENALTY = 0.5
+"""Taken off the score of a match the user cannot see now, so that what is on screen wins a tie."""
+
+
 def _describe(element: ElementSnapshot) -> str:
+    text = _describe_content(element)
+    return f'{text} (not visible now: {element.hidden_reason})' if element.hidden_reason else text
+
+
+def _where(element: ElementSnapshot) -> str:
+    """Where to find an element the user cannot see now."""
+    place = element.section.rsplit(' > ', 1)[-1] if element.section else ''
+    kind, _, name = place.partition(': ')
+    if kind == 'Tab' and name:
+        return f' This is on the {name} tab, which is not on screen now.'
+    if kind == 'Slide' and name:
+        return f' This is on the {name} slide of the carousel, which is not on screen now.'
+    if kind == 'Expansion' and name:
+        return f' This is in the "{name}" section, which is collapsed.'
+    return f' This is under "{place}", which is not on screen now.' if place else ' This is not on screen now.'
+
+
+def _describe_content(element: ElementSnapshot) -> str:
     name = f'"{element.label}"' if element.label else ''
-    if element.hidden_reason:
-        return f'{element.kind} {name} (not visible now: {element.hidden_reason})'.replace('  ', ' ')
     if element.table:
         return f'table {name} with {len(element.table.rows):,} rows'.replace('  ', ' ')
     if element.series is not None:
@@ -108,24 +128,21 @@ def _describe(element: ElementSnapshot) -> str:
 def _describe_state(page: PageContext) -> str:
     lines = []
     for element in page.elements:
-        if element.hidden_reason:
-            continue
+        where = f' (not visible now: {element.hidden_reason})' if element.hidden_reason else ''
         if element.has_value:
-            lines.append(f'- {element.label or element.kind} is set to {element.value} [ref:{element.id}]')
+            lines.append(f'- {element.label or element.kind} is set to {element.value}{where} [ref:{element.id}]')
         if element.state:
             state = '; '.join(f'{key}: {value}' for key, value in element.state.items())
-            lines.append(f'- {element.label or element.kind} has {state} [ref:{element.id}]')
+            lines.append(f'- {element.label or element.kind} has {state}{where} [ref:{element.id}]')
     return 'The page currently has:\n\n' + '\n'.join(lines) if lines else 'I see no inputs or applied state on this page.'
 
 
 def _best_numeric_target(words: set[str], page: PageContext) -> tuple[ElementSnapshot, str, object] | None:
     """Find the table column or chart series that best matches the question's words."""
     best = None
-    best_score = -1
+    best_score: float = -1
     for element in page.elements:
-        if element.hidden_reason:
-            continue
-        label_score = len(words & _words(element.label))
+        label_score = len(words & _words(element.label)) - (OFF_SCREEN_PENALTY if element.hidden_reason else 0)
         if element.table:
             for column in element.table.columns:
                 if column_stats(element.table.rows[:2000], column)['type'] != 'number':
@@ -146,8 +163,10 @@ def _answer_measure(measure: str, target: tuple[ElementSnapshot, str, object]) -
     element, name, data = target
     cite = f'[ref:{element.id}]'
     if isinstance(data, TableData):
-        return _table_measure(measure, name, data, cite)
-    return _series_measure(measure, name, data, cite)
+        answer = _table_measure(measure, name, data, cite)
+    else:
+        answer = _series_measure(measure, name, data, cite)
+    return answer + _where(element) if element.hidden_reason else answer
 
 
 def _series_measure(measure: str, name: str, series: Series, cite: str) -> str:
@@ -199,13 +218,11 @@ def _keyword_matches(words: set[str], page: PageContext) -> str:
         return ''
     scored = []
     for element in page.elements:
-        if element.hidden_reason and not words & _words(element.label):
-            continue
         haystack = _words(' '.join(str(part) for part in (element.label, element.text or '', element.description,
                                                           element.value if element.has_value else '') if part))
-        score = len(words & haystack)
-        if score and element.kind != 'button':
-            scored.append((score, element))
+        matches = len(words & haystack)
+        if matches and element.kind != 'button':
+            scored.append((matches - (OFF_SCREEN_PENALTY if element.hidden_reason else 0), element))
     if not scored:
         return ''
     top = max(score for score, _ in scored)
