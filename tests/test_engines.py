@@ -329,6 +329,18 @@ async def test_offline_engine_answers_from_another_tab_and_prefers_the_screen_on
     assert '[ref:chart-1]' in turn.text and '500' not in turn.text and 'not on screen' not in turn.text
 
 
+@pytest.mark.parametrize('section, reason, where', [
+    ('Slide: Q3', 'inactive slide', 'on the Q3 slide of the carousel'),
+    ('Tab: Team > Expansion: Details', 'collapsed', 'in the "Details" section, which is collapsed'),
+])
+async def test_offline_engine_says_which_slide_or_section_holds_the_answer(section, reason, where):
+    page = PageContext(elements=[glimpse.ElementSnapshot(
+        id='table-1', kind='table', label='Headcount', section=section, hidden_reason=reason,
+        table=glimpse.TableData(columns=['team', 'people'], rows=[{'team': 'Dev', 'people': 9}]))])
+    turn = await run(session_with(OfflineEngine(delay=0), page), 'What is the highest headcount?')
+    assert '9' in turn.text and where in turn.text
+
+
 # Choosing a model.
 
 

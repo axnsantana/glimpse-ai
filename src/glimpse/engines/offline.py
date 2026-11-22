@@ -104,6 +104,10 @@ def _where(element: ElementSnapshot) -> str:
     kind, _, name = place.partition(': ')
     if kind == 'Tab' and name:
         return f' This is on the {name} tab, which is not on screen now.'
+    if kind == 'Slide' and name:
+        return f' This is on the {name} slide of the carousel, which is not on screen now.'
+    if kind == 'Expansion' and name:
+        return f' This is in the "{name}" section, which is collapsed.'
     return f' This is under "{place}", which is not on screen now.' if place else ' This is not on screen now.'
 
 

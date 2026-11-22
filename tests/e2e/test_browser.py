@@ -245,6 +245,36 @@ def test_other_tabs_are_read_with_the_filters_left_on_them_and_a_source_opens_it
     assert [error for error in page.errors if 'Resize must be passed a displayed plot' not in error] == []
 
 
+def test_carousels_and_collapsed_sections_are_read_and_their_sources_open_them(page, serve):
+    page.goto(serve('tests/e2e/sections_app.py'))
+    # The user opens the expansion, filters its grid, and collapses it again.
+    page.get_by_text('Order details').click()
+    page.locator('.nicegui-aggrid').first.wait_for()
+    page.wait_for_timeout(500)
+    page.locator('.nicegui-aggrid').last.evaluate("""(element) => {
+        getElement(element).api.setFilterModel({region: {filterType: 'text', type: 'equals', filter: 'APAC'}});
+    }""")
+    page.get_by_text('Order details').click()
+    page.wait_for_timeout(600)
+    open_panel(page)
+    answer = ask(page, 'Which team has the highest headcount?')
+    assert 'Dev' in answer and 'on the Team slide of the carousel' in answer
+    sent = what_was_sent(page)
+    details = section(sent, 'Expansion: Order details')
+    assert '(not visible: collapsed)' in details
+    assert '10 of 30 rows after the filter' in details, 'a collapsed grid keeps its filter'
+    assert 'EMEA' not in details[details.index('| Order'):]
+    team = section(sent, 'Slide: Team')
+    assert '(not visible: inactive slide)' in team and 'Showing all 3 rows' in team
+    assert 'did not report' not in sent
+
+    # The source is on a slide that is not shown. Its chip moves the carousel there.
+    page.locator('[data-glimpse=panel] .source').first.click()
+    page.get_by_role('gridcell', name='Dev').wait_for()
+    page.locator('.q-carousel').get_by_text('Welcome to the team page').wait_for(state='hidden')
+    assert page.errors == []
+
+
 def test_host_css_cannot_reach_the_panel_and_panel_css_cannot_reach_the_host(page, serve):
     page.goto(serve('05'))
     page.wait_for_timeout(500)

@@ -180,8 +180,7 @@ async def test_visibility_policy_visible_is_the_default(user: User):
     page_context = await capture(user)
     rendered = page_context.rendered
     assert 'First tab body' in rendered and 'Expanded body' in rendered
-    assert 'Collapsed body' not in rendered
-    assert element_by_label(page_context, 'Expansion: More').hidden_reason == 'collapsed'
+    assert element_for_text(page_context, 'Expanded body').hidden_reason == ''
 
 
 async def test_inactive_tabs_are_read_by_default_and_marked_as_not_on_screen(user: User):
@@ -200,20 +199,40 @@ async def test_inactive_tabs_are_read_by_default_and_marked_as_not_on_screen(use
     assert 'Entries marked "not visible" are on this page but not on screen now' in rendered
 
 
-async def test_read_inactive_tabs_false_sends_only_a_summary_of_each(user: User):
+async def test_collapsed_expansions_and_carousel_slides_are_read_by_default_too(user: User):
     @ui.page('/')
     def page():
         tabbed_page()
-        attach(read_inactive_tabs=False)
+        with ui.carousel():
+            with ui.carousel_slide('A'):
+                ui.label('Slide A body')
+            with ui.carousel_slide('B'):
+                ui.label('Slide B body')
+        attach()
+
+    page_context = await capture(user)
+    collapsed = element_for_text(page_context, 'Collapsed body')
+    assert collapsed.hidden_reason == 'collapsed' and collapsed.section == 'Expansion: More'
+    slide = element_for_text(page_context, 'Slide B body')
+    assert slide.hidden_reason == 'inactive slide' and slide.section == 'Slide: B'
+    assert element_for_text(page_context, 'Slide A body').hidden_reason == ''
+
+
+async def test_read_inactive_sections_false_sends_only_a_summary_of_each(user: User):
+    @ui.page('/')
+    def page():
+        tabbed_page()
+        attach(read_inactive_sections=False)
 
     page_context = await capture(user)
     rendered = page_context.rendered
-    assert 'Second tab body' not in rendered and 'cell' not in rendered
+    assert 'Second tab body' not in rendered and 'cell' not in rendered and 'Collapsed body' not in rendered
     stub = element_by_label(page_context, 'Tab: Two')
     assert stub.hidden_reason == 'inactive tab' and 'Contains 1 table' in stub.description
+    assert element_by_label(page_context, 'Expansion: More').hidden_reason == 'collapsed'
 
 
-async def test_steps_slides_and_collapsed_sections_stay_summaries_even_inside_a_read_tab(user: User):
+async def test_steps_stay_summaries_and_sections_nest_inside_a_read_tab(user: User):
     @ui.page('/')
     def page():
         with ui.tabs() as tabs:
@@ -240,20 +259,18 @@ async def test_steps_slides_and_collapsed_sections_stay_summaries_even_inside_a_
 
     page_context = await capture(user)
     rendered = page_context.rendered
-    assert 'Other tab body' in rendered and 'Step one body' in rendered and 'Slide A body' in rendered
-    for absent in ('Collapsed inside a tab', 'Step two body', 'Slide B body'):
-        assert absent not in rendered, absent
-    details = element_by_label(page_context, 'Expansion: Details')
-    assert details.hidden_reason == 'collapsed', 'the innermost reason is kept'
-    assert details.section == 'Tab: Two'
+    assert 'Other tab body' in rendered and 'Step one body' in rendered and 'Slide B body' in rendered
+    assert 'Step two body' not in rendered, 'a later step is often a stage the user has not reached'
     assert element_by_label(page_context, 'Step: Second').hidden_reason == 'inactive step'
-    assert element_by_label(page_context, 'Slide: B').hidden_reason == 'inactive slide'
+    nested = element_for_text(page_context, 'Collapsed inside a tab')
+    assert nested.hidden_reason == 'collapsed', 'the innermost reason is kept'
+    assert nested.section == 'Tab: Two > Expansion: Details'
 
 
-async def test_a_source_on_another_tab_opens_that_tab_when_clicked(user: User):
+async def test_a_source_on_another_tab_slide_or_section_opens_it_when_clicked(user: User):
     async def cite(messages, page):
         cited = [next(e for e in page.elements if e.text == text) for text in ('Nested body', 'First tab body')]
-        cited.append(element_by_label(page, 'Expansion: More'))
+        cited += [next(e for e in page.elements if e.text == text) for text in ('Collapsed body', 'Slide B body')]
         yield ' '.join(f'[ref:{element.id}]' for element in cited)
 
     @ui.page('/')
@@ -275,13 +292,18 @@ async def test_a_source_on_another_tab_opens_that_tab_when_clicked(user: User):
                         ui.label('Nested body')
         with ui.expansion('More', value=False):
             ui.label('Collapsed body')
+        with ui.carousel():
+            with ui.carousel_slide('A'):
+                ui.label('Slide A body')
+            with ui.carousel_slide('B'):
+                ui.label('Slide B body')
         glimpse.attach(engine=cite, probe=False)
 
     await user.open('/')
     panel = panel_of(user)
     turn = await ask(panel, 'Where is it?')
-    nested, first, more = turn.view()['sources']
-    assert nested['reveal'] and more['reveal']
+    nested, first, more, slide = turn.view()['sources']
+    assert nested['reveal'] and more['reveal'] and slide['reveal']
     assert not first['reveal'], 'it is on screen already'
     assert element_for_text(turn.page, 'Nested body').section == 'Tab: Two > Tab: Inner two'
 
@@ -290,10 +312,13 @@ async def test_a_source_on_another_tab_opens_that_tab_when_clicked(user: User):
         outer_tabs, inner_tabs = list(ElementFilter(kind=ui.tabs))
         outer_panels, inner_panels = list(ElementFilter(kind=ui.tab_panels))
         expansion = next(iter(ElementFilter(kind=ui.expansion)))
+        carousel = next(iter(ElementFilter(kind=ui.carousel)))
     assert outer_tabs.value == outer_panels.value == 'Two', 'the outer tab opens first'
     assert inner_tabs.value == inner_panels.value == 'Inner two'
     panel.reveal(turn.id, more['id'])
     assert expansion.value is True
+    panel.reveal(turn.id, slide['id'])
+    assert carousel.value == 'B'
     panel.reveal(turn.id, 'not-an-element')
     panel.reveal(12345, nested['id'])
 

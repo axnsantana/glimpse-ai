@@ -38,9 +38,9 @@ LADDER = (
 
 Serializer = Callable[[PageContext, Detail], str]
 
-OFF_SCREEN_NOTE = ('Entries marked "not visible" are on this page but not on screen now, for example on another tab, '
-                   'and show what the user will see when they open it. When an answer uses one, tell the user where '
-                   'to find it.')
+OFF_SCREEN_NOTE = ('Entries marked "not visible" are on this page but not on screen now, for example on another tab '
+                   'or in a collapsed section, and show what the user will see when they open it. When an answer '
+                   'uses one, tell the user where to find it.')
 
 
 def _clip(text: Any, limit: int) -> str:

@@ -42,10 +42,10 @@ def _call_if_callable(value: Any) -> Any:
 
 
 class Walker:
-    def __init__(self, exclude_fields: Collection[Any], visibility: str, read_inactive_tabs: bool = True) -> None:
+    def __init__(self, exclude_fields: Collection[Any], visibility: str, read_inactive_sections: bool = True) -> None:
         self.exclude_fields = exclude_fields
         self.visibility = visibility
-        self.read_inactive_tabs = read_inactive_tabs
+        self.read_inactive_sections = read_inactive_sections
         self.elements: list[ElementSnapshot] = []
         self.notes: list[str] = []
         self.withheld = 0
@@ -57,8 +57,8 @@ class Walker:
         self._path: list[RevealStep | None] = []
         """The hidden containers around the current element. None is one a source cannot open, such as a dialog."""
 
-    # Extractors register what needs a browser probe. Elements off screen are probed too: a tab
-    # the user has opened stays mounted in the browser, with its filters, after they leave it.
+    # Extractors register what needs a browser probe. Elements off screen are probed too: a tab the
+    # user has opened, or a collapsed expansion, stays mounted in the page with its filters.
     def probe_grid(self, element: Element, snapshot: ElementSnapshot) -> None:
         self.grids.append((element, snapshot))
 
@@ -79,19 +79,23 @@ class Walker:
         if not element.visible or extractors.is_css_hidden(_compat.classes_of(element), _compat.styles_of(element)):
             return
 
+        # Tabs, slides and expansions usually fold one view to save room, so their content is part of the page.
+        # A later step is often a stage the user has not reached, so steps are read only when "reachable".
         if 'TabPanels' in names:
-            # Tabs usually split one view to save room, so their content counts as part of the page.
-            self._switching_children(element, section, 'TabPanel', 'Tab', 'inactive tab', read=self.read_inactive_tabs)
+            self._switching_children(element, section, 'TabPanel', 'Tab', 'inactive tab',
+                                     read=self.read_inactive_sections)
         elif 'Stepper' in names:
             self._switching_children(element, section, 'Step', 'Step', 'inactive step')
         elif 'Carousel' in names:
-            self._switching_children(element, section, 'CarouselSlide', 'Slide', 'inactive slide')
+            self._switching_children(element, section, 'CarouselSlide', 'Slide', 'inactive slide',
+                                     read=self.read_inactive_sections)
         elif 'Expansion' in names:
             title = str(getattr(element, 'text', '') or '')
             if element.value:
                 self._children(element, _join(section, f'Expansion: {title}'))
             else:
-                self._hidden(element, section, f'Expansion: {title}', 'collapsed', stub=True, step=(element.id, True))
+                self._hidden(element, section, f'Expansion: {title}', 'collapsed', stub=True,
+                             read=self.read_inactive_sections, step=(element.id, True))
         elif 'Dialog' in names or 'Menu' in names or 'Popup' in names:
             kind = next(name for name in names if name in ('Dialog', 'Menu', 'Popup'))
             if element.value:
@@ -205,7 +209,7 @@ def reveal(client: Client, steps: tuple[RevealStep, ...]) -> None:
 
 async def capture_page(client: Client, config: GlimpseConfig) -> PageContext:
     """Read this client's page. Walks on the event loop, which is quick as data is only referenced."""
-    walker = Walker(config.exclude_fields, config.visibility, config.read_inactive_tabs)
+    walker = Walker(config.exclude_fields, config.visibility, config.read_inactive_sections)
     walker.walk(client.layout)
     for snapshot, steps in walker.reveals:
         snapshot.reveal = functools.partial(reveal, client, steps)
