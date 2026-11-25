@@ -99,6 +99,8 @@ Everything runs in your NiceGUI process. Read [Data flow](https://github.com/axn
 
 ## Development
 
+Contributions are welcome. Start with [CONTRIBUTING.md](https://github.com/axnsantana/glimpse-ai/blob/main/CONTRIBUTING.md) and the [good first issues](https://github.com/axnsantana/glimpse-ai/labels/good%20first%20issue).
+
 ```bash
 conda env create -f environment.yml && conda activate glimpse
 pytest                # Fast tests, including every example
