@@ -6,7 +6,7 @@ Each requirement from the Software Requirements Specification (draft 0.1) for th
 - **Partial** says what is missing.
 - **Not done** means it is out of this MVP.
 
-Claude Opus 5.5 has been run live on Anthropic's API. No other provider has, including Vertex AI and the Gemini API, so anything marked "fake server" ran against the real SDK and a local server speaking the provider's wire format.
+Claude Opus 5.5 has been run live on Anthropic's API, and Gemini on Vertex AI has answered real questions in hand testing, without a scored run. No other provider has been run live, including Claude on Vertex AI and the Gemini API, so anything marked "fake server" ran against the real SDK and a local server speaking the provider's wire format.
 
 ## Page capture
 
@@ -49,7 +49,7 @@ Claude Opus 5.5 has been run live on Anthropic's API. No other provider has, inc
 | ID | Priority | Status | Evidence or gap |
 |---|---|---|---|
 | DEV-1 | MUST, prov. | Done | Example 01. Assumption A2 still needs real apps from other developers |
-| DEV-2 | MUST | Done | [models.md](models.md), examples 07 and 11. Vertex AI with a project and location, for Claude and Gemini, on a fake server only: `test_claude_on_vertex_uses_the_project_region_and_no_api_key`, `test_gemini_on_vertex_uses_the_project_and_location` |
+| DEV-2 | MUST | Done | [models.md](models.md), examples 07 and 11. Vertex AI with a project and location, for Claude and Gemini, tested on a fake server, and Gemini on Vertex AI also by hand against Google Cloud: `test_claude_on_vertex_uses_the_project_region_and_no_api_key`, `test_gemini_on_vertex_uses_the_project_and_location` |
 | DEV-3 | MUST, prov. | Done | Example 04, `test_script_mode_gets_a_panel_per_client` and `test_root_function_app_follows_sub_page_navigation` (e2e). The shared auto-index page no longer exists in NiceGUI 3 |
 | DEV-4 | SHOULD | Done | `test_exact_system_prompt_override` |
 | DEV-5 | SHOULD | Done | `test_usage_hook_cost_and_session_limits`. Limits are per session, so they reset on reload |
