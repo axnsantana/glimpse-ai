@@ -6,7 +6,7 @@ Thanks for your interest in Glimpse. It is an early project with one maintainer,
 
 - **Try it on your own NiceGUI app and tell us what it got wrong.** This is the most useful help of all. Open an issue with the element, what the assistant said, and what was on the screen. The "What the assistant saw" section under each answer shows what reached the model.
 - **Pick an issue** labelled [good first issue](https://github.com/axnsantana/glimpse-ai/labels/good%20first%20issue) or [help wanted](https://github.com/axnsantana/glimpse-ai/labels/help%20wanted). Comment on it first, so two people do not do the same work.
-- **Test a setup we have not tried for real,** such as running behind a reverse proxy. [Known limits](docs/known-limits.md) lists what has been tested.
+- **Test a model or a setup we have not tried for real:** OpenAI, the Gemini API, local models ([#13](https://github.com/axnsantana/glimpse-ai/issues/13)), or running behind a reverse proxy ([#14](https://github.com/axnsantana/glimpse-ai/issues/14)). [Known limits](docs/known-limits.md) lists what has been tested.
 - **Ask questions and share ideas** in [Discussions](https://github.com/axnsantana/glimpse-ai/discussions).
 
 For anything larger than a small fix, open an issue or a discussion before writing code, so we can agree on the approach.
