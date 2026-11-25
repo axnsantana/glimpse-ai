@@ -17,7 +17,7 @@ ui.run()
 
 Users get a side panel where they can ask about what is on their screen. The assistant reads the live page when they ask, including their filters, sort order and chart zoom, and what is on other tabs or in collapsed sections. You do not annotate anything or pass it any data.
 
-![Glimpse beside a sales dashboard. After the user filters the grid, the assistant reports the 21 orders on screen and the highest amount among them](https://raw.githubusercontent.com/axnsantana/glimpse-ai/main/docs/images/real-model-filtered-grid.png)
+![Glimpse beside a sales dashboard. The user asks how many orders are shown and which has the highest amount, and the assistant answers 240 orders, with SO-1047 the highest. The user then filters the grid's Region column to EMEA and asks again, and the assistant answers 80 of the 240 orders, with SO-1126 the highest](https://raw.githubusercontent.com/axnsantana/glimpse-ai/main/docs/images/glimpse-demo.gif)
 
 > **Status: 0.3, an early MVP.** Capture, the panel and the security defaults are tested in a real browser. With Claude Opus 5.5, it answered all 30 reference questions correctly, including 4 asked from one tab and answered from another, in one run on a single dashboard with a simple scorer. That is a good early sign, not a full evaluation. See [known limits](https://github.com/axnsantana/glimpse-ai/blob/main/docs/known-limits.md).
 
