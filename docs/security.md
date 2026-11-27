@@ -17,6 +17,32 @@ A read-only assistant can still leak data. In several documented incidents, data
 | API key exposure | All model calls run on the server. The browser only ever receives sanitized text | SEC-8 |
 | Dependence on a vendor | The core has no cloud dependency | SEC-10 |
 
+## What is sent to the model provider
+
+For each question, the engine receives a snapshot of this user's page, taken when they ask. With the defaults, it holds:
+
+- **What is on screen**, including content scrolled out of view, with the user's filters, sort order, chart zoom and input values.
+- **The content of inactive tabs, carousel slides and collapsed expansions**, each marked as not visible. A grid the user filtered keeps its filter after they leave its tab. A tab never opened is read from the server, as it would show when opened. This means Glimpse sends more than what the user is looking at right now: it sees what is on the screen, including the parts folded away.
+- **A stub for each inactive step** of a `ui.stepper`, naming it and what it contains.
+- **Your developer context** from `context=` and `glimpse.describe()`, the question, and earlier questions and answers as text.
+
+Large tables and series are reduced to statistics and a sample, such as "Showing 50 of 12,000 rows". The model can fetch more rows through read-only tools, which read the same snapshot and nothing else.
+
+**Not sent:** content hidden with CSS or `set_visibility(False)`, closed dialogs, menus and drawers, tooltips, table columns that are not displayed, and anything withheld with the controls below. [visibility-policy.md](visibility-policy.md) has the full table, and [data-flow.md](data-flow.md) says where each engine sends it.
+
+### Controlling what is sent
+
+| Control | Effect |
+|---|---|
+| `read_inactive_sections=False` | Inactive tabs, slides and collapsed expansions are sent as a stub naming them, not their content. This was the behaviour before 0.3 |
+| `glimpse.exclude(element)` or `glimpse.describe(element, available=False)` | The element and everything inside it are withheld, and the assistant is told something is withheld. `available` can be a function, so an element can come and go |
+| `exclude_fields=[...]` | Columns and inputs whose names match a string or a compiled regular expression are withheld. Names like `password`, `api_key` or `credit_card` are withheld by default |
+| `redact=` | Runs on every string in the snapshot and on the question, before any engine sees them |
+| `visibility="reachable"` | Sends more, not less: closed dialogs, menus, drawers and inactive steps too |
+| `engine="offline"`, or a local model | Nothing leaves your infrastructure |
+
+Withheld elements are dropped while the page is read, so the tools, the inspector and the conversation history never see them. Use these controls for anything a model provider should not receive, even when the user is allowed to see it.
+
 ## Prompt injection is limited, not solved
 
 Language models cannot reliably separate instructions from data. A table cell that says "ignore your instructions" still reaches the model, because it is on the page. Fencing makes the model less likely to obey it, and the panel's sanitizer limits what a hijacked answer can do: it cannot make the browser send data anywhere. But a hijacked model can still give the user a wrong or misleading answer. Treat answers from pages that show untrusted text accordingly.
@@ -29,7 +55,7 @@ The same applies to `system_prompt=`.
 
 ## The inspector
 
-"What the assistant saw" shows end users the page state sent for an answer. That is all data already on their screen. The system prompt and developer context stay out of it unless you pass `inspector="full"`, which is meant for development. It is still not a security boundary, for the reason above. Pass `inspector=False` to turn it off.
+"What the assistant saw" shows end users the page state sent for an answer. That is data from their own page: what is on their screen and, by default, the content of its other tabs, slides and collapsed sections, as described [above](#what-is-sent-to-the-model-provider). The system prompt and developer context stay out of it unless you pass `inspector="full"`, which is meant for development. It is still not a security boundary, for the reason above. Pass `inspector=False` to turn it off.
 
 ## What stays your job
 
