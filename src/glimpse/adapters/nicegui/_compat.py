@@ -1,4 +1,7 @@
-"""Every use of NiceGUI internals lives in this file (NFR-7). See docs/nicegui-internals.md.
+"""Every use of undocumented NiceGUI APIs lives in this file (NFR-7). See docs/nicegui-internals.md.
+
+Glimpse uses no private NiceGUI attributes. Element props, classes and style are read through the public
+`element.props`, `element.classes` and `element.style`, which return the same objects as the private ones.
 
 The tests run against the pinned minimum version and NiceGUI pre-releases, so a change
 here shows up as a test failure, not as an assistant that silently sees less.
@@ -16,18 +19,6 @@ from nicegui.slot import Slot
 def has_slot_context() -> bool:
     """Whether this code runs while a page is being built. ui.context would create a client as a side effect."""
     return bool(Slot.get_stack())
-
-
-def props_of(element: Element) -> dict[str, Any]:
-    return element._props
-
-
-def classes_of(element: Element) -> list[str]:
-    return list(element._classes)
-
-
-def styles_of(element: Element) -> dict[str, str]:
-    return dict(element._style)
 
 
 def children_of(element: Element) -> Iterator[Element]:

@@ -46,7 +46,7 @@ The browser tests use your installed Chrome. Without it, run `playwright install
 `tests/test_architecture.py` enforces the first three.
 
 1. **Only `src/glimpse/adapters/nicegui/` imports NiceGUI.** The core stays independent of the framework, so a second framework can be added later.
-2. **Private NiceGUI APIs stay in [`_compat.py`](src/glimpse/adapters/nicegui/_compat.py),** and [docs/nicegui-internals.md](docs/nicegui-internals.md) lists each one.
+2. **No private NiceGUI attributes, and undocumented APIs stay in [`_compat.py`](src/glimpse/adapters/nicegui/_compat.py).** Use the public `element.props`, `.classes` and `.style`. [docs/nicegui-internals.md](docs/nicegui-internals.md) lists every NiceGUI API Glimpse relies on.
 3. **Nothing about a session or a page lives at module level.** Two users must never see each other's data.
 4. **Provider SDKs stay optional.** NiceGUI is the only required dependency, and engines import their SDK lazily.
 5. **Model output never reaches HTML.** `panel.js` uses `textContent` only. Treat any change to `sanitize.py` or `panel.js` as a security change, and say so in the pull request.

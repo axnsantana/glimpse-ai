@@ -28,7 +28,7 @@ class GlimpsePanel(Element, component='panel.js'):
         inspector: bool | str = True,
     ) -> None:
         super().__init__()
-        self._props['config'] = {
+        self.props['config'] = {
             'title': title,
             'suggestions': list(suggestions),
             'width': width,

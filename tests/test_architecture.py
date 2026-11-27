@@ -41,18 +41,18 @@ def test_only_the_adapter_mentions_nicegui():
     assert not offenders, offenders
 
 
-def test_private_nicegui_attributes_only_appear_in_compat():
-    """NFR-7: a NiceGUI upgrade should have one place to break."""
+def test_no_private_nicegui_attributes():
+    """NFR-7: a NiceGUI upgrade should have one place to break.
+
+    Props, classes and style have public equivalents (element.props, .classes, .style), so they are not
+    needed even in _compat.py.
+    """
     private = ('_props', '_classes', '_style', '_event_listeners', '_deleted')
     offenders = []
     for path in ADAPTER.glob('*.py'):
-        if path.name == '_compat.py':
-            continue
         tree = ast.parse(path.read_text())
         for node in ast.walk(tree):
             if isinstance(node, ast.Attribute) and node.attr in private:
-                if isinstance(node.value, ast.Name) and node.value.id == 'self' and path.name == 'panel.py':
-                    continue  # A subclass setting its own props is NiceGUI's documented way to write a component.
                 offenders.append(f'{path.name}:{node.lineno} {node.attr}')
     assert not offenders, offenders
 

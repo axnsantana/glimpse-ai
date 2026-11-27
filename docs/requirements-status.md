@@ -93,7 +93,7 @@ Claude Opus 5.5 has been run live on Anthropic's API, and Gemini on Vertex AI ha
 | NFR-4 | SHOULD, prov. | Partial | `test_snapshot_does_not_block_the_event_loop` applies a smoke limit on 300,000 rows. Numeric targets wait for S1 |
 | NFR-5 | SHOULD, prov. | Partial | 30 questions in `test_fidelity.py`, plus 4 live questions about other tabs, slides and collapsed sections. Whether the facts reach the model is tested in every run. Claude Opus 5.5 scored 30/30 live, and 4/4 on the other-section questions, in one run with a simple substring scorer and the probe off. Pass thresholds wait for spike S1 |
 | NFR-6 | SHOULD | Done | `test_only_the_adapter_mentions_nicegui` |
-| NFR-7 | SHOULD | Done | [nicegui-internals.md](nicegui-internals.md), `test_private_nicegui_attributes_only_appear_in_compat` |
+| NFR-7 | SHOULD | Done | [nicegui-internals.md](nicegui-internals.md), `test_no_private_nicegui_attributes` |
 | NFR-8 | MUST | Done | `docs/` |
 | NFR-9 | SHOULD | Done | `test_failure_cases.py` |
 

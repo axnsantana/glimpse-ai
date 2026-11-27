@@ -1,6 +1,8 @@
 # NiceGUI internals used by Glimpse
 
-Glimpse reads NiceGUI's live element tree, which goes beyond its documented API in a few places. All private use is in [`_compat.py`](../src/glimpse/adapters/nicegui/_compat.py), and a test enforces that (NFR-7). Written against NiceGUI 3.18.0 and tested on 3.19.0 and 4.0.0.
+Glimpse reads NiceGUI's live element tree, which goes beyond its documented API in a few places. It uses no private NiceGUI attributes in Python, and a test enforces that. The public but undocumented APIs it relies on are in [`_compat.py`](../src/glimpse/adapters/nicegui/_compat.py) (NFR-7). Written against NiceGUI 3.18.0 and tested on 3.19.0, 4.0.0 and 4.1.0.
+
+A NiceGUI maintainer confirmed the status of `props`, `classes`, `style`, `Slot.get_stack()` and `sub_pages_router.current_path` in [discussion 6521](https://github.com/zauberzeug/nicegui/discussions/6521).
 
 | What | Used for | Status |
 |---|---|---|
@@ -9,10 +11,10 @@ Glimpse reads NiceGUI's live element tree, which goes beyond its documented API 
 | `element.slots`, `slot.children`, `element.parent_slot`, `element.descendants()`, `element.visible` | The walk, finding a nearby label | Public attributes, lightly documented |
 | `element.html_id` | Scrolling to a cited element | Public |
 | `ui.table.rows`, `.columns`, `.selected`, `.pagination`, `.filter`, `ui.aggrid.options`, `ui.echart.options`, `ui.plotly.figure`, `ui.pyplot.fig`, `.value`, `.text`, `.content` | Reading elements | Public |
-| `element._props` | Labels and input types | **Private**, in `_compat.py`. `panel.py` also sets its own props, the usual way to write a component |
-| `element._classes`, `element._style` | Detecting CSS-hidden content | **Private**, in `_compat.py` |
-| `Slot.get_stack()` | Telling a page function from module level, without the side effect of `ui.context` creating a script-mode client | **Private**, in `_compat.py` |
-| `client.sub_pages_router.current_path` | The URL of the current sub page | **Private-ish**, in `_compat.py` |
+| `element.props` | Labels and input types. `panel.py` also sets its own props, the usual way to write a component | Public. Returns the same `Props` dict as the private `_props` |
+| `element.classes`, `element.style` | Detecting CSS-hidden content | Public. A `Classes` list and a `Style` dict, the same objects as the private attributes |
+| `Slot.get_stack()` | Telling a page function from module level, without the side effect of `ui.context` creating a script-mode client | Public but undocumented, in `_compat.py` |
+| `client.sub_pages_router.current_path` | The URL of the current sub page | Public but undocumented, in `_compat.py` |
 | Class names such as `AgGrid` and `EChart` | Choosing an extractor with no optional imports | Stable in practice. `test_every_nicegui_class_is_dispatched_on_purpose` flags new input-like classes |
 
 ## In the browser
