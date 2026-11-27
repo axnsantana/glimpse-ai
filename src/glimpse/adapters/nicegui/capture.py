@@ -76,7 +76,7 @@ class Walker:
         if meta.get('excluded') or not _call_if_callable(meta.get('available', True)):
             self.withheld += 1
             return
-        if not element.visible or extractors.is_css_hidden(_compat.classes_of(element), _compat.styles_of(element)):
+        if not element.visible or extractors.is_css_hidden(element.classes, element.style):
             return
 
         # Tabs, slides and expansions usually fold one view to save room, so their content is part of the page.
@@ -105,7 +105,7 @@ class Walker:
         elif CONTAINER_CLASSES.intersection(names):
             self._children(element, section)
         elif 'Drawer' in names:
-            side = str(_compat.props_of(element).get('side') or '').capitalize()
+            side = str(element.props.get('side') or '').capitalize()
             label = f'{side} drawer'.strip()
             # None means the browser decides by width, and that drawer shows on a desktop.
             if element.value is False:
@@ -119,12 +119,12 @@ class Walker:
         self, element: Element, section: str, child_class: str, label: str, reason: str, *, read: bool = False,
     ) -> None:
         value = element.value
-        active = _compat.props_of(value).get('name') if isinstance(value, Element) else value
+        active = value.props.get('name') if isinstance(value, Element) else value
         for child in _compat.children_of(element):
             if child_class not in _compat.class_names(child):
                 self.walk(child, section)
                 continue
-            name = _compat.props_of(child).get('name')
+            name = child.props.get('name')
             title = f'{label}: {name}'
             if name == active:
                 self._children(child, _join(section, title))

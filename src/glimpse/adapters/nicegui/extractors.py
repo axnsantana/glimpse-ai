@@ -121,7 +121,7 @@ class Extractor:
 
 def label_of(element: Element) -> str:
     """The name a user would give this element: its own label, or a short text right before it."""
-    props = _compat.props_of(element)
+    props = element.props
     for name in ('label', 'aria-label', 'title', 'placeholder'):
         value = props.get(name)
         if isinstance(value, str) and value.strip():
@@ -181,14 +181,14 @@ def mermaid(element: Element, walker: Any) -> ElementSnapshot | None:
 
 
 def chat_message(element: Element, walker: Any) -> ElementSnapshot | None:
-    props = _compat.props_of(element)
+    props = element.props
     text = props.get('text')
     text = ' '.join(str(part) for part in text) if isinstance(text, list) else str(text or '')
     return _snapshot(element, walker, 'message', label=str(props.get('name') or ''), text=visible_text_of_html(text))
 
 
 def tree(element: Element, walker: Any) -> ElementSnapshot | None:
-    props = _compat.props_of(element)
+    props = element.props
     state = {}
     if props.get('selected') is not None:
         state['selected'] = props['selected']
@@ -210,7 +210,7 @@ def _tree_labels(nodes: list[dict], key: str) -> list[str]:
 
 def image(element: Element, walker: Any) -> ElementSnapshot | None:
     # The source is left out: it can be a data URL, or a URL with credentials.
-    props = _compat.props_of(element)
+    props = element.props
     return _snapshot(element, walker, 'image', label=str(props.get('alt') or nearby_label(element)), readable=False)
 
 
@@ -225,13 +225,13 @@ def unreadable(kind: str) -> Callable[[Element, Any], ElementSnapshot | None]:
 
 
 def _is_sensitive_input(element: Element, label: str, walker: Any) -> bool:
-    props = _compat.props_of(element)
+    props = element.props
     if props.get('type') == 'password':
         return True
     # A revealed password keeps its toggle icon in the append slot, though its type is now "text".
     if 'append' in element.slots:
         for child in element.slots['append'].children:
-            if _compat.props_of(child).get('name') in ('visibility', 'visibility_off'):
+            if child.props.get('name') in ('visibility', 'visibility_off'):
                 return True
     if str(props.get('autocomplete') or '').lower() in ('current-password', 'new-password', 'cc-number', 'cc-csc'):
         return True
@@ -273,10 +273,10 @@ def choice_input(element: Element, walker: Any) -> ElementSnapshot | None:
 def tabs(element: Element, walker: Any) -> ElementSnapshot | None:
     names = []
     for child in _compat.children_of(element):
-        props = _compat.props_of(child)
+        props = child.props
         names.append(str(props.get('label') or props.get('name') or ''))
     value = getattr(element, 'value', None)
-    current = _compat.props_of(value).get('name') if isinstance(value, Element) else value
+    current = value.props.get('name') if isinstance(value, Element) else value
     return _snapshot(element, walker, 'tabs', label='Tabs', has_value=True, value=current, options=names)
 
 
@@ -293,7 +293,7 @@ def _drop_fields(
 
 
 def table(element: Element, walker: Any) -> ElementSnapshot | None:
-    props = _compat.props_of(element)
+    props = element.props
     visible = props.get('visible-columns')
     names: dict[str, str] = {}
     labels: dict[str, str] = {}
