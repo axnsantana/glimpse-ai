@@ -68,7 +68,7 @@ Passing data to a chat function by hand works until users start filtering. Then 
 | **Sees the applied view** | Grid filters and sort, chart zoom and hidden series, table sort and inputs, on the current tab and in other tabs, slides and collapsed sections |
 | **Stays inside a budget** | Large tables and series become statistics computed in Python, plus a visible "Showing 50 of 12,000 rows" and read-only tools to fetch more |
 | **Shows its work** | "What the assistant saw" under each answer, and sources that scroll to the element used |
-| **Safe by default** | Passwords withheld, hidden text ignored, images and external links in answers disabled, sessions isolated |
+| **Safe by default** | Passwords withheld, hidden text ignored, images and external links in answers disabled, sessions isolated. See [what is sent to the model](https://github.com/axnsantana/glimpse-ai/blob/main/docs/security.md#what-is-sent-to-the-model-provider) and how to withhold more |
 | **Your model** | Claude and Gemini, on their APIs or on Vertex AI, OpenAI, local models, a council of models that checks its answers, a Google ADK agent, or your own. No cloud service of ours, and no agent framework required |
 | **Small** | NiceGUI is the only required dependency |
 

@@ -46,9 +46,9 @@ Glimpse itself has no telemetry and no hosted service.
 - **System prompt:** static instructions, with no page data in it
 - **Tool definitions:** four read-only tools
 - **History:** earlier questions and answers as text, newest first until the budget runs out
-- **The latest user message:** the developer context and page state, fenced as data, then the question
+- **The latest user message:** the developer context and page state, fenced as data, then the question. By default, the page state holds what is on screen and the content of inactive tabs, slides and collapsed expansions, marked as not visible. [security.md](security.md#what-is-sent-to-the-model-provider) lists what is and is not sent, and how to control it
 
-The page state goes only in the latest message. Earlier messages keep only the question, so history stays small and the model always answers from the current screen.
+The page state goes only in the latest message. Earlier messages keep only the question, so history stays small and the model always answers from the page as it is now, not as it was at an earlier question.
 
 ## What runs where
 
